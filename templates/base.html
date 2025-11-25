@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ROAR{% endblock %}</title>
+
+    <!-- CSS Styles -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container {% if not user.is_authenticated %}auth-page{% endif %}">
+        <!-- Sidebar Navigation -->
+        {% if user.is_authenticated %}
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-graduation-cap"></i> </h2>
+                <div class="sidebar-controls">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <button class="sidebar-close" id="sidebarClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                {% if user.profile_pic %}
+                    <img src="{{ user.profile_pic.url }}" alt="{{ user.get_full_name }}" class="user-avatar">
+                {% else %}
+                    <div class="user-avatar-placeholder">
+                        {{ user.first_name|first }}{{ user.last_name|first }}
+                    </div>
+                {% endif %}
+                <div class="user-info">
+                    <h3 class="user-name">{{ user.get_full_name }}</h3>
+                    <p class="user-role">{{ user.get_user_type_display }}</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{% url 'dashboard' %}" class="{% if request.path == '/' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span>
+                    </a></li>
+
+                    {% if user.is_admin %}
+                    <li class="nav-section">
+                        <span class="nav-section-title">Administration</span>
+                        <ul>
+                            <li><a href="{% url 'student_list' %}" class="{% if '/students/' in request.path %}active{% endif %}">
+                                <i class="fas fa-user-graduate"></i> <span class="menu-text">Students</span>
+                            </a></li>
+                            <li><a href="{% url 'teacher_list' %}" class="{% if '/teachers/' in request.path %}active{% endif %}">
+                                <i class="fas fa-chalkboard-teacher"></i> <span class="menu-text">Teachers</span>
+                            </a></li>
+                            <li><a href="{% url 'course_list' %}" class="{% if '/courses/' in request.path %}active{% endif %}">
+                                <i class="fas fa-book"></i> <span class="menu-text">Courses</span>
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="nav-section-title">Operations</span>
+                        <ul>
+                            <li><a href="{% url 'attendance_record_list' %}" class="{% if '/attendance/' in request.path %}active{% endif %}">
+                                <i class="fas fa-clipboard-check"></i> <span class="menu-text">Attendance</span>
+                            </a></li>
+                            <li><a href="{% url 'fee_invoice_list' %}" class="{% if '/fees/' in request.path %}active{% endif %}">
+                                <i class="fas fa-money-bill-wave"></i> <span class="menu-text">Fees</span>
+                            </a></li>
+                            <li><a href="{% url 'report_dashboard' %}" class="{% if '/reports/' in request.path %}active{% endif %}">
+                                <i class="fas fa-chart-bar"></i> <span class="menu-text">Reports</span>
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {% if user.is_teacher %}
+                    <li class="nav-section">
+                        <span class="nav-section-title">Teaching</span>
+                        <ul>
+                            <li><a href="{% url 'course_list' %}">
+                                <i class="fas fa-book"></i> <span class="menu-text">My Courses</span>
+                            </a></li>
+                            <li><a href="{% url 'attendance_record_list' %}">
+                                <i class="fas fa-clipboard-check"></i> <span class="menu-text">Attendance</span>
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {% if user.is_student %}
+                    <li class="nav-section">
+                        <span class="nav-section-title">Learning</span>
+                        <ul>
+                            <li><a href="{% url 'student_enrollments' %}">
+                                <i class="fas fa-book"></i> <span class="menu-text">My Courses</span>
+                            </a></li>
+                            <li><a href="{% url 'student_attendance_report' %}">
+                                <i class="fas fa-clipboard-check"></i> <span class="menu-text">My Attendance</span>
+                            </a></li>
+                            <li><a href="{% url 'student_fee_list' %}">
+                                <i class="fas fa-money-bill-wave"></i> <span class="menu-text">My Fees</span>
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-section">
+                        <span class="nav-section-title">Account</span>
+                        <ul>
+                            <li><a href="{% url 'profile' %}">
+                                <i class="fas fa-user-circle"></i> <span class="menu-text">Profile</span>
+                            </a></li>
+                            <li><a href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span>
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="main-content {% if not user.is_authenticated %}auth-main{% endif %}">
+            {% if user.is_authenticated %}
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1><i class="fas fa-graduation-cap"></i> ROAR</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-search">
+                        <input type="text" placeholder="Search...">
+                        <button><i class="fas fa-search"></i></button>
+                    </div>
+                    <div class="header-notifications">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                    </div>
+                    <div class="header-user">
+                        <a href="{% url 'profile' %}" class="user-profile-link">
+                            {% if user.profile_pic %}
+                            <img src="{{ user.profile_pic.url }}" alt="{{ user.get_full_name }}" class="user-avatar-small">
+                            {% else %}
+                            <div class="user-avatar-small-placeholder">
+                                {{ user.first_name|first }}{{ user.last_name|first }}
+                            </div>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </header>
+            {% endif %}
+
+            <div class="content-wrapper">
+                {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                        <button class="close-btn"><i class="fas fa-times"></i></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="content">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+
+            <footer class="main-footer">
+                <p>&copy; {% now "Y" %} ROAR. All rights reserved.</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/main.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

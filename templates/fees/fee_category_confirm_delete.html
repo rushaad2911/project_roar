@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Fee Category - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Delete Fee Category</h1>
+    <p>Confirm deletion of fee category</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Confirm Deletion</h3>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> Warning: This action cannot be undone.
+        </div>
+        
+        <p>Are you sure you want to delete the fee category <strong>"{{ object.name }}"</strong>?</p>
+        
+        <div class="category-details">
+            <div class="detail-item">
+                <div class="detail-label">Name:</div>
+                <div class="detail-value">{{ object.name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Amount:</div>
+                <div class="detail-value">${{ object.amount|floatformat:2 }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Description:</div>
+                <div class="detail-value">{{ object.description|default:"No description provided" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Recurring:</div>
+                <div class="detail-value">{{ object.is_recurring|yesno:"Yes,No" }}</div>
+            </div>
+        </div>
+        
+        <form method="post" class="delete-form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Confirm Delete
+                </button>
+                <a href="{% url 'fee_category_list' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .category-details {
+        background-color: var(--gray-100);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .detail-item {
+        display: flex;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid var(--gray-300);
+        padding-bottom: 0.75rem;
+    }
+    
+    .detail-item:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        width: 120px;
+        color: var(--gray-700);
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}

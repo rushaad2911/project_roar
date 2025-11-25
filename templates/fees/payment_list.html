@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Payments - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Payments</h1>
+    <p>View and manage all payment records</p>
+</div>
+
+<div class="action-bar">
+    <div class="action-buttons">
+        <a href="{% url 'payment_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Payment
+        </a>
+    </div>
+    
+    <div class="filter-section">
+        <form method="get" class="filter-form">
+            <div class="form-group">
+                <input type="text" name="search" placeholder="Search by receipt number or student" class="form-control" value="{{ request.GET.search }}">
+            </div>
+            <div class="form-group">
+                <select name="payment_method" class="form-control">
+                    <option value="">All Payment Methods</option>
+                    <option value="cash" {% if request.GET.payment_method == 'cash' %}selected{% endif %}>Cash</option>
+                    <option value="credit_card" {% if request.GET.payment_method == 'credit_card' %}selected{% endif %}>Credit Card</option>
+                    <option value="bank_transfer" {% if request.GET.payment_method == 'bank_transfer' %}selected{% endif %}>Bank Transfer</option>
+                    <option value="check" {% if request.GET.payment_method == 'check' %}selected{% endif %}>Check</option>
+                    <option value="other" {% if request.GET.payment_method == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+            <a href="{% url 'payment_list' %}" class="btn btn-outline">
+                <i class="fas fa-sync"></i> Reset
+            </a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if payments %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Receipt #</th>
+                        <th>Invoice #</th>
+                        <th>Student</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Date</th>
+                        <th>Transaction ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.receipt_number }}</td>
+                        <td>
+                            <a href="{% url 'fee_invoice_detail' payment.invoice.id %}">
+                                {{ payment.invoice.invoice_number }}
+                            </a>
+                        </td>
+                        <td>{{ payment.invoice.student.user.get_full_name }}</td>
+                        <td>${{ payment.amount|floatformat:2 }}</td>
+                        <td>{{ payment.get_payment_method_display }}</td>
+                        <td>{{ payment.payment_date }}</td>
+                        <td>{{ payment.transaction_id|default:"-" }}</td>
+                        <td class="table-actions">
+                            <a href="{% url 'fee_invoice_detail' payment.invoice.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View Invoice
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li><a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.payment_method %}&payment_method={{ request.GET.payment_method }}{% endif %}">&laquo; First</a></li>
+                <li><a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.payment_method %}&payment_method={{ request.GET.payment_method }}{% endif %}">Previous</a></li>
+                {% else %}
+                <li class="disabled"><span>&laquo; First</span></li>
+                <li class="disabled"><span>Previous</span></li>
+                {% endif %}
+                
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }}</span></li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li><a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.payment_method %}&payment_method={{ request.GET.payment_method }}{% endif %}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.payment_method %}&payment_method={{ request.GET.payment_method }}{% endif %}">Next</a></li>
+                <li><a href="?page={{ paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.payment_method %}&payment_method={{ request.GET.payment_method }}{% endif %}">Last &raquo;</a></li>
+                {% else %}
+                <li class="disabled"><span>Next</span></li>
+                <li class="disabled"><span>Last &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <h4>No Payments Found</h4>
+            <p>There are no payment records matching your criteria.</p>
+            {% if request.GET.search or request.GET.payment_method %}
+            <a href="{% url 'payment_list' %}" class="btn btn-outline">
+                <i class="fas fa-sync"></i> Clear Filters
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+    
+    .filter-form {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-form .form-group {
+        margin-bottom: 0;
+    }
+    
+    .filter-form .form-control {
+        width: auto;
+        display: inline-block;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+    
+    .empty-state p {
+        color: var(--gray-600);
+        margin-bottom: 1.5rem;
+    }
+    
+    .table-actions {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}

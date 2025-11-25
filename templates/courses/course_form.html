@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Edit Course{% else %}Create Course{% endif %} - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>{% if object %}Edit Course{% else %}Create Course{% endif %}</h1>
+    <p>{% if object %}Update course details{% else %}Create a new course{% endif %}</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Course Details</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" class="course-form">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                <p class="error-message">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="{{ form.name.id_for_label }}">
+                        <i class="fas fa-book"></i> Course Name
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <div class="field-errors">
+                        {% for error in form.name.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group col-md-6">
+                    <label for="{{ form.code.id_for_label }}">
+                        <i class="fas fa-hashtag"></i> Course Code
+                    </label>
+                    {{ form.code }}
+                    {% if form.code.errors %}
+                    <div class="field-errors">
+                        {% for error in form.code.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="{{ form.credits.id_for_label }}">
+                        <i class="fas fa-award"></i> Credits
+                    </label>
+                    {{ form.credits }}
+                    {% if form.credits.errors %}
+                    <div class="field-errors">
+                        {% for error in form.credits.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group col-md-6">
+                    <label for="{{ form.teachers.id_for_label }}">
+                        <i class="fas fa-chalkboard-teacher"></i> Teachers
+                    </label>
+                    {{ form.teachers }}
+                    {% if form.teachers.errors %}
+                    <div class="field-errors">
+                        {% for error in form.teachers.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <small class="form-text text-muted">Hold Ctrl (or Cmd on Mac) to select multiple teachers</small>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">
+                    <i class="fas fa-align-left"></i> Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <div class="field-errors">
+                    {% for error in form.description.errors %}
+                    <p class="error-message">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="formset-container">
+                <h4>Course Schedule</h4>
+                
+                {{ schedule_formset.management_form }}
+                
+                <div class="formset-rows">
+                    {% for schedule_form in schedule_formset %}
+                    <div class="formset-row">
+                        <div class="row-header">
+                            <h5>Schedule #{{ forloop.counter }}</h5>
+                            {% if schedule_formset.can_delete %}
+                            <button type="button" class="btn btn-sm btn-outline delete-formset-row">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        {% if schedule_form.non_field_errors %}
+                        <div class="form-errors">
+                            {% for error in schedule_form.non_field_errors %}
+                            <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% for hidden_field in schedule_form.hidden_fields %}
+                        {{ hidden_field }}
+                        {% endfor %}
+                        
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="{{ schedule_form.day.id_for_label }}">
+                                    <i class="fas fa-calendar-day"></i> Day
+                                </label>
+                                {{ schedule_form.day }}
+                                {% if schedule_form.day.errors %}
+                                <div class="field-errors">
+                                    {% for error in schedule_form.day.errors %}
+                                    <p class="error-message">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group col-md-6">
+                                <label for="{{ schedule_form.room.id_for_label }}">
+                                    <i class="fas fa-door-open"></i> Room
+                                </label>
+                                {{ schedule_form.room }}
+                                {% if schedule_form.room.errors %}
+                                <div class="field-errors">
+                                    {% for error in schedule_form.room.errors %}
+                                    <p class="error-message">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="{{ schedule_form.start_time.id_for_label }}">
+                                    <i class="fas fa-clock"></i> Start Time
+                                </label>
+                                {{ schedule_form.start_time }}
+                                {% if schedule_form.start_time.errors %}
+                                <div class="field-errors">
+                                    {% for error in schedule_form.start_time.errors %}
+                                    <p class="error-message">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group col-md-6">
+                                <label for="{{ schedule_form.end_time.id_for_label }}">
+                                    <i class="fas fa-clock"></i> End Time
+                                </label>
+                                {{ schedule_form.end_time }}
+                                {% if schedule_form.end_time.errors %}
+                                <div class="field-errors">
+                                    {% for error in schedule_form.end_time.errors %}
+                                    <p class="error-message">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="formset-actions">
+                    <button type="button" class="btn btn-outline add-formset-row">
+                        <i class="fas fa-plus"></i> Add Another Schedule
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {% if object %}Update{% else %}Create{% endif %} Course
+                </button>
+                <a href="{% url 'course_list' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .course-form {
+        padding: 1rem 0;
+    }
+    
+    .formset-container {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background-color: var(--gray-100);
+        border-radius: var(--border-radius);
+    }
+    
+    .formset-container h4 {
+        margin-bottom: 1.5rem;
+        color: var(--gray-700);
+    }
+    
+    .formset-row {
+        background-color: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .row-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--gray-300);
+    }
+    
+    .row-header h5 {
+        margin-bottom: 0;
+        color: var(--gray-700);
+    }
+    
+    .formset-actions {
+        margin-top: 1rem;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle adding new formset rows
+        const addButton = document.querySelector('.add-formset-row');
+        if (addButton) {
+            addButton.addEventListener('click', function() {
+                const formsetContainer = document.querySelector('.formset-container');
+                const totalFormsInput = formsetContainer.querySelector('[name$="-TOTAL_FORMS"]');
+                const formRows = formsetContainer.querySelectorAll('.formset-row');
+                
+                if (formRows.length > 0) {
+                    // Clone the last form
+                    const lastForm = formRows[formRows.length - 1];
+                    const newForm = lastForm.cloneNode(true);
+                    
+                    // Update form index
+                    const currentFormCount = parseInt(totalFormsInput.value);
+                    const newFormHtml = newForm.innerHTML.replace(
+                        new RegExp(`-${currentFormCount - 1}-`, 'g'), 
+                        `-${currentFormCount}-`
+                    );
+                    newForm.innerHTML = newFormHtml;
+                    
+                    // Update the row header
+                    const rowHeader = newForm.querySelector('.row-header h5');
+                    if (rowHeader) {
+                        rowHeader.textContent = `Schedule #${currentFormCount + 1}`;
+                    }
+                    
+                    // Clear input values
+                    const inputs = newForm.querySelectorAll('input:not([type="hidden"]), select, textarea');
+                    inputs.forEach(input => {
+                        input.value = '';
+                    });
+                    
+                    // Increment form count
+                    totalFormsInput.value = currentFormCount + 1;
+                    
+                    // Add the new form
+                    formsetContainer.querySelector('.formset-rows').appendChild(newForm);
+                }
+            });
+        }
+        
+        // Handle deleting formset rows
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('delete-formset-row') || 
+                e.target.parentElement && e.target.parentElement.classList.contains('delete-formset-row')) {
+                
+                e.preventDefault();
+                const button = e.target.classList.contains('delete-formset-row') ? e.target : e.target.parentElement;
+                const row = button.closest('.formset-row');
+                const formsetContainer = row.closest('.formset-container');
+                const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                
+                if (deleteInput) {
+                    // Mark for deletion (Django formset style)
+                    deleteInput.value = 'on';
+                    row.style.display = 'none';
+                } else {
+                    // Just remove the row if it's a new form
+                    row.remove();
+                    
+                    // Update total forms count
+                    const totalFormsInput = formsetContainer.querySelector('[name$="-TOTAL_FORMS"]');
+                    const formRows = formsetContainer.querySelectorAll('.formset-row');
+                    totalFormsInput.value = formRows.length;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

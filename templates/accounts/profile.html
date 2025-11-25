@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>My Profile</h1>
+    <p>Update your personal information and account settings</p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3>Profile Information</h3>
+            </div>
+            <div class="card-body">
+                <div class="profile-info">
+                    <div class="profile-pic-container">
+                        {% if user.profile_pic %}
+                            <img src="{{ user.profile_pic.url }}" alt="{{ user.get_full_name }}" class="profile-pic">
+                        {% else %}
+                            <div class="profile-pic-placeholder">
+                                {{ user.first_name|first|default:"U" }}{{ user.last_name|first|default:"" }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="profile-details">
+                        <h4>{{ user.get_full_name|default:user.username }}</h4>
+                        <p class="user-role">{{ user.get_user_type_display }}</p>
+                        <p class="user-email">{{ user.email|default:"No email provided" }}</p>
+                        <p class="user-mobile">{{ user.mobile|default:"No mobile number provided" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3>Edit Profile</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" class="profile-form">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="form-errors">
+                        {% for error in form.non_field_errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.first_name.id_for_label }}">
+                                <i class="fas fa-user"></i> First Name
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <div class="field-errors">
+                                {% for error in form.first_name.errors %}
+                                <p class="error-message">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group col-md-6">
+                            <label for="{{ form.last_name.id_for_label }}">
+                                <i class="fas fa-user"></i> Last Name
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <div class="field-errors">
+                                {% for error in form.last_name.errors %}
+                                <p class="error-message">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}">
+                            <i class="fas fa-envelope"></i> Email
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="field-errors">
+                            {% for error in form.email.errors %}
+                            <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.mobile.id_for_label }}">
+                            <i class="fas fa-phone"></i> Mobile Number
+                        </label>
+                        {{ form.mobile }}
+                        {% if form.mobile.errors %}
+                        <div class="field-errors">
+                            {% for error in form.mobile.errors %}
+                            <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.address.id_for_label }}">
+                            <i class="fas fa-map-marker-alt"></i> Address
+                        </label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                        <div class="field-errors">
+                            {% for error in form.address.errors %}
+                            <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.profile_pic.id_for_label }}">
+                            <i class="fas fa-image"></i> Profile Picture
+                        </label>
+                        {{ form.profile_pic }}
+                        {% if form.profile_pic.errors %}
+                        <div class="field-errors">
+                            {% for error in form.profile_pic.errors %}
+                            <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Upload a profile picture (optional)</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profile-pic-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .profile-pic {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid #f8f9fa;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-pic-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        border: 5px solid #f8f9fa;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-details h4 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .user-role {
+        display: inline-block;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+    
+    .user-email, .user-mobile {
+        color: var(--gray-600);
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-form {
+        padding: 1rem 0;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}

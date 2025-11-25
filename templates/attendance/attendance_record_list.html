@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Records - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Attendance Records</h1>
+    <p>View and manage attendance records</p>
+</div>
+
+<div class="action-bar">
+    <div class="action-buttons">
+        {% if user.is_admin or user.is_teacher %}
+        <a href="{% url 'attendance_record_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Take Attendance
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="filter-section">
+        <form method="get" class="filter-form">
+            <div class="form-group">
+                <select name="course" class="form-control">
+                    <option value="">All Courses</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:"i" %}selected{% endif %}>
+                        {{ course.name }} ({{ course.code }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="date" name="date" class="form-control" value="{{ request.GET.date }}">
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+            <a href="{% url 'attendance_record_list' %}" class="btn btn-outline">
+                <i class="fas fa-sync"></i> Reset
+            </a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if records %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Course</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>Late</th>
+                        <th>Excused</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance_records %}
+                    <tr>
+                        <td>{{ record.date|date:"M d, Y" }}</td>
+                        <td>{{ record.course.name }} ({{ record.course.code }})</td>
+                        <td>{{ record.present_count|default:0 }}</td>
+                        <td>{{ record.absent_count|default:0 }}</td>
+                        <td>{{ record.late_count|default:0 }}</td>
+                        <td>{{ record.excused_count|default:0 }}</td>
+                        <td class="table-actions">
+                            <a href="{% url 'attendance_record_detail' record.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            {% if user.is_admin or user.is_teacher %}
+                            <a href="{% url 'update_attendance' record.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            {% endif %}
+                            {% if user.is_admin %}
+                            <a href="{% url 'attendance_record_delete' record.id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li><a href="?page=1{% if request.GET.course %}&course={{ request.GET.course }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}">&laquo; First</a></li>
+                <li><a href="?page={{ page_obj.previous_page_number }}{% if request.GET.course %}&course={{ request.GET.course }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}">Previous</a></li>
+                {% else %}
+                <li class="disabled"><span>&laquo; First</span></li>
+                <li class="disabled"><span>Previous</span></li>
+                {% endif %}
+
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }}</span></li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li><a href="?page={{ i }}{% if request.GET.course %}&course={{ request.GET.course }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}{% if request.GET.course %}&course={{ request.GET.course }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}">Next</a></li>
+                <li><a href="?page={{ paginator.num_pages }}{% if request.GET.course %}&course={{ request.GET.course }}{% endif %}{% if request.GET.date %}&date={{ request.GET.date }}{% endif %}">Last &raquo;</a></li>
+                {% else %}
+                <li class="disabled"><span>Next</span></li>
+                <li class="disabled"><span>Last &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <h4>No Attendance Records Found</h4>
+            <p>There are no attendance records matching your criteria.</p>
+            {% if request.GET.course or request.GET.date %}
+            <a href="{% url 'attendance_record_list' %}" class="btn btn-outline">
+                <i class="fas fa-sync"></i> Clear Filters
+            </a>
+            {% else %}
+            {% if user.is_admin or user.is_teacher %}
+            <a href="{% url 'attendance_record_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Take First Attendance
+            </a>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-form .form-group {
+        margin-bottom: 0;
+    }
+
+    .filter-form .form-control {
+        width: auto;
+        display: inline-block;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+        margin-bottom: 1.5rem;
+    }
+
+    .table-actions {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}

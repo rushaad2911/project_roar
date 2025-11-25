@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Update Enrollment{% else %}Create Enrollment{% endif %} - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>{% if object %}Update Enrollment{% else %}Create Enrollment{% endif %}</h1>
+    <p>{% if object %}Update enrollment details{% else %}Enroll a student in a course{% endif %}</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Enrollment Details</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" class="enrollment-form">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                <p class="error-message">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="{{ form.student.id_for_label }}">
+                        <i class="fas fa-user-graduate"></i> Student
+                    </label>
+                    {{ form.student }}
+                    {% if form.student.errors %}
+                    <div class="field-errors">
+                        {% for error in form.student.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group col-md-6">
+                    <label for="{{ form.course.id_for_label }}">
+                        <i class="fas fa-book"></i> Course
+                    </label>
+                    {{ form.course }}
+                    {% if form.course.errors %}
+                    <div class="field-errors">
+                        {% for error in form.course.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="{{ form.status.id_for_label }}">
+                        <i class="fas fa-info-circle"></i> Status
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <div class="field-errors">
+                        {% for error in form.status.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group col-md-6">
+                    <label for="{{ form.grade.id_for_label }}">
+                        <i class="fas fa-graduation-cap"></i> Grade
+                    </label>
+                    {{ form.grade }}
+                    {% if form.grade.errors %}
+                    <div class="field-errors">
+                        {% for error in form.grade.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <small class="form-text text-muted">Optional. Can be updated later when the course is completed.</small>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                {% if request.user.is_admin %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {% if object %}Update{% else %}Create{% endif %} Enrollment
+                </button>
+                {% endif %}
+                <a href="{% url 'enrollment_list' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .enrollment-form {
+        padding: 1rem 0;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}

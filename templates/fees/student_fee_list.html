@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% load fee_extras %}
+
+{% block title %}My Fees - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>My Fees</h1>
+    <p>View your fee invoices and payment history</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Fee Invoices</h3>
+    </div>
+    <div class="card-body">
+        {% if invoices %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Total Amount</th>
+                        <th>Paid Amount</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td>{{ invoice.invoice_number }}</td>
+                        <td>{{ invoice.issue_date }}</td>
+                        <td>{{ invoice.due_date }}</td>
+                        <td>${{ invoice.total_amount|floatformat:2 }}</td>
+                        <td>${{ invoice.paid_amount|floatformat:2 }}</td>
+                        <td>${{ invoice.balance|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge {% if invoice.status == 'paid' %}badge-success{% elif invoice.status == 'pending' %}badge-warning{% elif invoice.status == 'overdue' %}badge-danger{% else %}badge-secondary{% endif %}">
+                                {{ invoice.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'fee_invoice_detail' invoice.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li><a href="?page=1">&laquo; First</a></li>
+                <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% else %}
+                <li class="disabled"><span>&laquo; First</span></li>
+                <li class="disabled"><span>Previous</span></li>
+                {% endif %}
+
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }}</span></li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li><a href="?page={{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                <li><a href="?page={{ paginator.num_pages }}">Last &raquo;</a></li>
+                {% else %}
+                <li class="disabled"><span>Next</span></li>
+                <li class="disabled"><span>Last &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <h4>No Fee Invoices Found</h4>
+            <p>You don't have any fee invoices yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Payment Summary</h3>
+    </div>
+    <div class="card-body">
+        {% if invoices %}
+        <div class="payment-summary">
+            {% with total_fees=0 total_paid=0 %}
+                {% for invoice in invoices %}
+                    {% with total_fees=total_fees|add:invoice.total_amount total_paid=total_paid|add:invoice.paid_amount %}
+                        {% if forloop.last %}
+                        <div class="summary-item">
+                            <div class="summary-label">Total Fees</div>
+                            <div class="summary-value">${{ total_fees|floatformat:2 }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Total Paid</div>
+                            <div class="summary-value">${{ total_paid|floatformat:2 }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Balance Due</div>
+                            <div class="summary-value">${{ total_fees|sub:total_paid|floatformat:2 }}</div>
+                        </div>
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
+            {% endwith %}
+        </div>
+
+        <div class="payment-progress">
+            <div class="progress-label">
+                <span>Payment Progress</span>
+                {% with total_fees=0 total_paid=0 %}
+                    {% for invoice in invoices %}
+                        {% with total_fees=total_fees|add:invoice.total_amount total_paid=total_paid|add:invoice.paid_amount %}
+                            {% if forloop.last %}
+                                {% if total_fees > 0 %}
+                                <span>{{ total_paid|div:total_fees|mul:100|floatformat:1 }}%</span>
+                                {% else %}
+                                <span>0%</span>
+                                {% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                {% endwith %}
+            </div>
+            <div class="progress">
+                {% with total_fees=0 total_paid=0 %}
+                    {% for invoice in invoices %}
+                        {% with total_fees=total_fees|add:invoice.total_amount total_paid=total_paid|add:invoice.paid_amount %}
+                            {% if forloop.last %}
+                                {% if total_fees > 0 %}
+                                <div class="progress-bar" style="width: {{ total_paid|div:total_fees|mul:100 }}%"></div>
+                                {% else %}
+                                <div class="progress-bar" style="width: 0%"></div>
+                                {% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                {% endwith %}
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No fee information available.</p>
+        </div>
+        {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+
+    .badge-success {
+        color: #fff;
+        background-color: #2ecc71;
+    }
+
+    .badge-warning {
+        color: #212529;
+        background-color: #f39c12;
+    }
+
+    .badge-danger {
+        color: #fff;
+        background-color: #e74c3c;
+    }
+
+    .badge-secondary {
+        color: #fff;
+        background-color: #6c757d;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+
+    .empty-state p {
+        color: var(--gray-600);
+    }
+
+    .payment-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-item {
+        flex: 1;
+        min-width: 150px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .summary-label {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+
+    .payment-progress {
+        margin-top: 2rem;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .progress {
+        height: 1rem;
+        background-color: #e9ecef;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background-color: #2ecc71;
+    }
+</style>
+
+{% block extra_js %}
+<script>
+    // No additional JavaScript needed as calculations are now done in the template
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any additional JavaScript functionality here if needed
+    });
+</script>
+{% endblock %}
+{% endblock %}

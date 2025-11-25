@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Categories - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Fee Categories</h1>
+    <p>View and manage fee categories</p>
+</div>
+
+<div class="action-bar">
+    <div class="action-buttons">
+        <a href="{% url 'fee_category_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Category
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if categories %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Recurring</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <tr>
+                        <td>{{ category.name }}</td>
+                        <td>{{ category.description|truncatechars:50|default:"-" }}</td>
+                        <td>${{ category.amount|floatformat:2 }}</td>
+                        <td>
+                            {% if category.is_recurring %}
+                            <span class="badge badge-success">Yes</span>
+                            {% else %}
+                            <span class="badge badge-secondary">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-actions">
+                            <a href="{% url 'fee_category_update' category.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'fee_category_delete' category.id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-tags"></i>
+            </div>
+            <h4>No Fee Categories Found</h4>
+            <p>There are no fee categories defined yet.</p>
+            <a href="{% url 'fee_category_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create First Category
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+    
+    .badge-success {
+        color: #fff;
+        background-color: #2ecc71;
+    }
+    
+    .badge-secondary {
+        color: #fff;
+        background-color: #6c757d;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+    
+    .empty-state p {
+        color: var(--gray-600);
+        margin-bottom: 1.5rem;
+    }
+    
+    .table-actions {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}

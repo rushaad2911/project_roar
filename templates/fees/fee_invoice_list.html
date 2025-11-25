@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Invoices - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Fee Invoices</h1>
+    <p>View and manage all fee invoices</p>
+</div>
+
+<div class="action-bar">
+    <div class="action-buttons">
+        <a href="{% url 'fee_invoice_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Invoice
+        </a>
+    </div>
+    
+    <div class="filter-section">
+        <form method="get" class="filter-form">
+            <div class="form-group">
+                <input type="text" name="search" placeholder="Search by invoice number or student" class="form-control" value="{{ request.GET.search }}">
+            </div>
+            <div class="form-group">
+                <select name="status" class="form-control">
+                    <option value="">All Statuses</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="overdue" {% if request.GET.status == 'overdue' %}selected{% endif %}>Overdue</option>
+                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+            <a href="{% url 'fee_invoice_list' %}" class="btn btn-outline">
+                <i class="fas fa-sync"></i> Reset
+            </a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if invoices %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Student</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Total Amount</th>
+                        <th>Paid Amount</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td>{{ invoice.invoice_number }}</td>
+                        <td>{{ invoice.student.user.get_full_name }}</td>
+                        <td>{{ invoice.issue_date }}</td>
+                        <td>{{ invoice.due_date }}</td>
+                        <td>${{ invoice.total_amount|floatformat:2 }}</td>
+                        <td>${{ invoice.paid_amount|floatformat:2 }}</td>
+                        <td>${{ invoice.balance|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge {% if invoice.status == 'paid' %}badge-success{% elif invoice.status == 'pending' %}badge-warning{% elif invoice.status == 'overdue' %}badge-danger{% else %}badge-secondary{% endif %}">
+                                {{ invoice.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="table-actions">
+                            <a href="{% url 'fee_invoice_detail' invoice.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <a href="{% url 'fee_invoice_update' invoice.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'create_payment_for_invoice' invoice.id %}" class="btn btn-sm btn-success">
+                                <i class="fas fa-money-bill-wave"></i> Payment
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li><a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">&laquo; First</a></li>
+                <li><a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a></li>
+                {% else %}
+                <li class="disabled"><span>&laquo; First</span></li>
+                <li class="disabled"><span>Previous</span></li>
+                {% endif %}
+                
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }}</span></li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li><a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a></li>
+                <li><a href="?page={{ paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Last &raquo;</a></li>
+                {% else %}
+                <li class="disabled"><span>Next</span></li>
+                <li class="disabled"><span>Last &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <h4>No Invoices Found</h4>
+            <p>There are no fee invoices matching your criteria.</p>
+            {% if request.GET.search or request.GET.status %}
+            <a href="{% url 'fee_invoice_list' %}" class="btn btn-outline">
+                <i class="fas fa-sync"></i> Clear Filters
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+    
+    .filter-form {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-form .form-group {
+        margin-bottom: 0;
+    }
+    
+    .filter-form .form-control {
+        width: auto;
+        display: inline-block;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+    
+    .badge-success {
+        color: #fff;
+        background-color: #2ecc71;
+    }
+    
+    .badge-warning {
+        color: #212529;
+        background-color: #f39c12;
+    }
+    
+    .badge-danger {
+        color: #fff;
+        background-color: #e74c3c;
+    }
+    
+    .badge-secondary {
+        color: #fff;
+        background-color: #6c757d;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+    
+    .empty-state p {
+        color: var(--gray-600);
+        margin-bottom: 1.5rem;
+    }
+    
+    .table-actions {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}

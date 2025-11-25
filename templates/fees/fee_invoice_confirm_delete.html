@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Invoice - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Delete Invoice</h1>
+    <p>Confirm deletion of invoice</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Confirm Deletion</h3>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> Warning: This action cannot be undone.
+        </div>
+        
+        <p>Are you sure you want to delete the invoice <strong>#{{ object.invoice_number }}</strong>?</p>
+        
+        <div class="invoice-details">
+            <div class="detail-item">
+                <div class="detail-label">Invoice Number:</div>
+                <div class="detail-value">{{ object.invoice_number }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Student:</div>
+                <div class="detail-value">{{ object.student.user.get_full_name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Issue Date:</div>
+                <div class="detail-value">{{ object.issue_date }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Due Date:</div>
+                <div class="detail-value">{{ object.due_date }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Total Amount:</div>
+                <div class="detail-value">${{ object.total_amount|floatformat:2 }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Paid Amount:</div>
+                <div class="detail-value">${{ object.paid_amount|floatformat:2 }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Status:</div>
+                <div class="detail-value">
+                    <span class="status-badge {% if object.status == 'paid' %}status-paid{% elif object.status == 'pending' %}status-pending{% elif object.status == 'overdue' %}status-overdue{% else %}status-cancelled{% endif %}">
+                        {{ object.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        {% if object.payments.exists %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle"></i> This invoice has associated payments. Deleting it will also delete all payment records.
+        </div>
+        {% endif %}
+        
+        <form method="post" class="delete-form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Confirm Delete
+                </button>
+                <a href="{% url 'fee_invoice_list' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .invoice-details {
+        background-color: var(--gray-100);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .detail-item {
+        display: flex;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid var(--gray-300);
+        padding-bottom: 0.75rem;
+    }
+    
+    .detail-item:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        width: 120px;
+        color: var(--gray-700);
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-paid {
+        background-color: rgba(46, 204, 113, 0.2);
+        color: #2ecc71;
+    }
+    
+    .status-pending {
+        background-color: rgba(243, 156, 18, 0.2);
+        color: #f39c12;
+    }
+    
+    .status-overdue {
+        background-color: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+    }
+    
+    .status-cancelled {
+        background-color: rgba(108, 117, 125, 0.2);
+        color: #6c757d;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}

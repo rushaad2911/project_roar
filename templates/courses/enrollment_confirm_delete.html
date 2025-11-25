@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Enrollment - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Delete Enrollment</h1>
+    <p>Confirm deletion of enrollment</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Confirm Deletion</h3>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> Warning: This action cannot be undone.
+        </div>
+        
+        <p>Are you sure you want to delete the enrollment of <strong>{{ object.student.user.get_full_name }}</strong> in <strong>{{ object.course.name }}</strong>?</p>
+        
+        <div class="enrollment-details">
+            <div class="detail-item">
+                <div class="detail-label">Student:</div>
+                <div class="detail-value">{{ object.student.user.get_full_name }} ({{ object.student.student_id }})</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Course:</div>
+                <div class="detail-value">{{ object.course.name }} ({{ object.course.code }})</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Enrollment Date:</div>
+                <div class="detail-value">{{ object.enrollment_date }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Status:</div>
+                <div class="detail-value">
+                    <span class="badge {% if object.status == 'active' %}badge-success{% elif object.status == 'completed' %}badge-info{% else %}badge-warning{% endif %}">
+                        {{ object.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Grade:</div>
+                <div class="detail-value">{{ object.grade|default:"Not graded" }}</div>
+            </div>
+        </div>
+        
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle"></i> Deleting this enrollment will remove the student from the course and delete all associated attendance records.
+        </div>
+        
+        <form method="post" class="delete-form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Confirm Delete
+                </button>
+                <a href="{% url 'enrollment_list' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .enrollment-details {
+        background-color: var(--gray-100);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .detail-item {
+        display: flex;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid var(--gray-300);
+        padding-bottom: 0.75rem;
+    }
+    
+    .detail-item:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        width: 120px;
+        color: var(--gray-700);
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+    
+    .badge-success {
+        color: #fff;
+        background-color: #2ecc71;
+    }
+    
+    .badge-info {
+        color: #fff;
+        background-color: #3498db;
+    }
+    
+    .badge-warning {
+        color: #212529;
+        background-color: #f39c12;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Courses - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Courses</h1>
+    <p>View and manage all courses</p>
+</div>
+
+<div class="action-bar">
+    <div class="action-buttons">
+        {% if user.is_admin %}
+        <a href="{% url 'course_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Course
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="filter-section">
+        <form method="get" class="filter-form">
+            <div class="form-group">
+                <input type="text" name="search" placeholder="Search by name or code" class="form-control" value="{{ request.GET.search }}">
+            </div>
+            <button type="submit" class="btn btn-outline">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+            <a href="{% url 'course_list' %}" class="btn btn-outline">
+                <i class="fas fa-sync"></i> Reset
+            </a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if courses %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Credits</th>
+                        <th>Teachers</th>
+                        <th>Students</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td>{{ course.code }}</td>
+                        <td>{{ course.name }}</td>
+                        <td>{{ course.credits }}</td>
+                        <td>
+                            {% for teacher in course.teachers.all %}
+                            <span class="teacher-badge">{{ teacher.user.get_full_name }}</span>
+                            {% empty %}
+                            <span class="text-muted">None</span>
+                            {% endfor %}
+                        </td>
+                        <td>{{ course.enrollments.count }}</td>
+                        <td class="table-actions">
+                            <a href="{% url 'course_detail' course.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            {% if user.is_admin %}
+                            <a href="{% url 'course_update' course.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'course_delete' course.id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                            {% endif %}
+                            {% if user.is_admin or user.is_teacher %}
+                            <a href="{% url 'attendance_record_create' %}?course={{ course.id }}" class="btn btn-sm btn-success">
+                                <i class="fas fa-clipboard-check"></i> Attendance
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li><a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">&laquo; First</a></li>
+                <li><a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Previous</a></li>
+                {% else %}
+                <li class="disabled"><span>&laquo; First</span></li>
+                <li class="disabled"><span>Previous</span></li>
+                {% endif %}
+                
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }}</span></li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li><a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Next</a></li>
+                <li><a href="?page={{ paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Last &raquo;</a></li>
+                {% else %}
+                <li class="disabled"><span>Next</span></li>
+                <li class="disabled"><span>Last &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <h4>No Courses Found</h4>
+            <p>There are no courses matching your criteria.</p>
+            {% if request.GET.search %}
+            <a href="{% url 'course_list' %}" class="btn btn-outline">
+                <i class="fas fa-sync"></i> Clear Filters
+            </a>
+            {% elif user.is_admin %}
+            <a href="{% url 'course_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create First Course
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+    
+    .filter-form {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-form .form-group {
+        margin-bottom: 0;
+    }
+    
+    .filter-form .form-control {
+        width: auto;
+        display: inline-block;
+    }
+    
+    .teacher-badge {
+        display: inline-block;
+        background-color: var(--gray-200);
+        color: var(--gray-700);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+    
+    .empty-state p {
+        color: var(--gray-600);
+        margin-bottom: 1.5rem;
+    }
+    
+    .table-actions {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}

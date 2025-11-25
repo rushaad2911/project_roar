@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit{% else %}Create{% endif %} Fee Category - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>{% if object %}Edit{% else %}Create{% endif %} Fee Category</h1>
+    <p>{% if object %}Update fee category details{% else %}Define a new fee category{% endif %}</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Category Details</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" class="category-form">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                <p class="error-message">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="{{ form.name.id_for_label }}">
+                        <i class="fas fa-tag"></i> Name
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <div class="field-errors">
+                        {% for error in form.name.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group col-md-6">
+                    <label for="{{ form.amount.id_for_label }}">
+                        <i class="fas fa-dollar-sign"></i> Amount
+                    </label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                    <div class="field-errors">
+                        {% for error in form.amount.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">
+                    <i class="fas fa-align-left"></i> Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <div class="field-errors">
+                    {% for error in form.description.errors %}
+                    <p class="error-message">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-group">
+                    {{ form.is_recurring }}
+                    <label for="{{ form.is_recurring.id_for_label }}">
+                        Is this a recurring fee?
+                    </label>
+                </div>
+                {% if form.is_recurring.errors %}
+                <div class="field-errors">
+                    {% for error in form.is_recurring.errors %}
+                    <p class="error-message">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <small class="form-text text-muted">Check this if the fee is charged regularly (e.g., monthly, quarterly, etc.)</small>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {% if object %}Update{% else %}Create{% endif %} Category
+                </button>
+                <a href="{% url 'fee_category_list' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .category-form {
+        padding: 1rem 0;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}

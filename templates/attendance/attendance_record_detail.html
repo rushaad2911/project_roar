@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Record - {{ attendance_record.date|date:"F d, Y" }} - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Attendance Record</h1>
+    <p>{{ attendance_record.course.name }} ({{ attendance_record.course.code }}) - {{ attendance_record.date|date:"F d, Y" }}</p>
+</div>
+
+<div class="action-bar">
+    <div class="action-buttons">
+        {% if user.is_admin or user.is_teacher %}
+        <a href="{% url 'update_attendance' attendance_record.id %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit Attendance
+        </a>
+        {% endif %}
+        <a href="{% url 'attendance_record_list' %}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Attendance Details</h3>
+    </div>
+    <div class="card-body">
+        <div class="attendance-summary">
+            <div class="summary-item">
+                <div class="summary-label">Course:</div>
+                <div class="summary-value">{{ attendance_record.course.name }} ({{ attendance_record.course.code }})</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Date:</div>
+                <div class="summary-value">{{ attendance_record.date|date:"F d, Y" }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Day:</div>
+                <div class="summary-value">{{ attendance_record.date|date:"l" }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Total Students:</div>
+                <div class="summary-value">{{ attendance_record.student_attendances.count }}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Notes:</div>
+                <div class="summary-value">{{ attendance_record.notes|default:"No notes provided"|linebreaks }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Student Attendance</h3>
+    </div>
+    <div class="card-body">
+        {% if attendance_record.student_attendances.all %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendance_record.student_attendances.all %}
+                    <tr>
+                        <td>{{ attendance.student.student_id }}</td>
+                        <td>{{ attendance.student.user.get_full_name }}</td>
+                        <td>
+                            <span class="badge {% if attendance.status == 'present' %}badge-success{% elif attendance.status == 'absent' %}badge-danger{% elif attendance.status == 'late' %}badge-warning{% else %}badge-info{% endif %}">
+                                {{ attendance.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ attendance.remarks|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No attendance records found for this date.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Attendance Statistics</h3>
+    </div>
+    <div class="card-body">
+        <div class="attendance-stats">
+            <div class="stat-item present">
+                <div class="stat-value">{{ present_count }}</div>
+                <div class="stat-label">Present</div>
+            </div>
+            <div class="stat-item absent">
+                <div class="stat-value">{{ absent_count }}</div>
+                <div class="stat-label">Absent</div>
+            </div>
+            <div class="stat-item late">
+                <div class="stat-value">{{ late_count }}</div>
+                <div class="stat-label">Late</div>
+            </div>
+            <div class="stat-item excused">
+                <div class="stat-value">{{ excused_count }}</div>
+                <div class="stat-label">Excused</div>
+            </div>
+        </div>
+
+        <div class="attendance-chart-container">
+            <canvas id="attendanceChart" width="100%" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<style>
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .attendance-summary {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .summary-item {
+        display: flex;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--gray-200);
+        padding-bottom: 1rem;
+    }
+
+    .summary-item:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .summary-label {
+        font-weight: 600;
+        width: 150px;
+        color: var(--gray-700);
+    }
+
+    .summary-value {
+        flex: 1;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+
+    .badge-success {
+        color: #fff;
+        background-color: #2ecc71;
+    }
+
+    .badge-danger {
+        color: #fff;
+        background-color: #e74c3c;
+    }
+
+    .badge-warning {
+        color: #212529;
+        background-color: #f39c12;
+    }
+
+    .badge-info {
+        color: #fff;
+        background-color: #3498db;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 1.5rem;
+        color: var(--gray-600);
+    }
+
+    .attendance-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-item {
+        flex: 1;
+        min-width: 120px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-item.present {
+        background-color: rgba(46, 204, 113, 0.1);
+    }
+
+    .stat-item.present .stat-value {
+        color: #2ecc71;
+    }
+
+    .stat-item.absent {
+        background-color: rgba(231, 76, 60, 0.1);
+    }
+
+    .stat-item.absent .stat-value {
+        color: #e74c3c;
+    }
+
+    .stat-item.late {
+        background-color: rgba(243, 156, 18, 0.1);
+    }
+
+    .stat-item.late .stat-value {
+        color: #f39c12;
+    }
+
+    .stat-item.excused {
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+
+    .stat-item.excused .stat-value {
+        color: #3498db;
+    }
+
+    .attendance-chart-container {
+        height: 300px;
+    }
+</style>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attendance Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+
+        const attendanceData = {
+            labels: ['Present', 'Absent', 'Late', 'Excused'],
+            datasets: [{
+                label: 'Attendance Status',
+                data: [
+                    {{ present_count|default:0 }},
+                    {{ absent_count|default:0 }},
+                    {{ late_count|default:0 }},
+                    {{ excused_count|default:0 }}
+                ],
+                backgroundColor: [
+                    'rgba(46, 204, 113, 0.7)',  // Present - Green
+                    'rgba(231, 76, 60, 0.7)',   // Absent - Red
+                    'rgba(243, 156, 18, 0.7)',  // Late - Yellow
+                    'rgba(52, 152, 219, 0.7)'   // Excused - Blue
+                ],
+                borderColor: [
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(231, 76, 60, 1)',
+                    'rgba(243, 156, 18, 1)',
+                    'rgba(52, 152, 219, 1)'
+                ],
+                borderWidth: 1
+            }]
+        };
+
+        new Chart(attendanceCtx, {
+            type: 'doughnut',
+            data: attendanceData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Attendance Distribution'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

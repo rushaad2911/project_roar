@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Update Attendance - {{ attendance_record.course.name }} - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Update Attendance</h1>
+    <p>{{ attendance_record.course.name }} ({{ attendance_record.course.code }}) - {{ attendance_record.date|date:"F d, Y" }}</p>
+</div>
+
+<div class="action-bar">
+    <div class="action-buttons">
+        <a href="{% url 'attendance_record_detail' attendance_record.id %}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Details
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Student Attendance</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" class="attendance-form">
+            {% csrf_token %}
+            
+            {{ formset.management_form }}
+            
+            <div class="attendance-controls">
+                <button type="button" class="btn btn-outline mark-all" data-status="present">
+                    <i class="fas fa-check"></i> Mark All Present
+                </button>
+                <button type="button" class="btn btn-outline mark-all" data-status="absent">
+                    <i class="fas fa-times"></i> Mark All Absent
+                </button>
+            </div>
+            
+            <div class="formset-container">
+                {% for form in formset %}
+                <div class="formset-row">
+                    {% if form.non_field_errors %}
+                    <div class="form-errors">
+                        {% for error in form.non_field_errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% for hidden_field in form.hidden_fields %}
+                    {{ hidden_field }}
+                    {% endfor %}
+                    
+                    <div class="student-attendance">
+                        <div class="student-info">
+                            <div class="student-name">
+                                <strong>{{ form.instance.student.user.get_full_name }}</strong>
+                            </div>
+                            <div class="student-id">
+                                ID: {{ form.instance.student.student_id }}
+                            </div>
+                        </div>
+                        
+                        <div class="attendance-options">
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="{{ form.status.html_name }}" value="present" {% if form.instance.status == 'present' %}checked{% endif %}>
+                                    <span class="radio-label present">Present</span>
+                                </label>
+                                
+                                <label class="radio-option">
+                                    <input type="radio" name="{{ form.status.html_name }}" value="absent" {% if form.instance.status == 'absent' %}checked{% endif %}>
+                                    <span class="radio-label absent">Absent</span>
+                                </label>
+                                
+                                <label class="radio-option">
+                                    <input type="radio" name="{{ form.status.html_name }}" value="late" {% if form.instance.status == 'late' %}checked{% endif %}>
+                                    <span class="radio-label late">Late</span>
+                                </label>
+                                
+                                <label class="radio-option">
+                                    <input type="radio" name="{{ form.status.html_name }}" value="excused" {% if form.instance.status == 'excused' %}checked{% endif %}>
+                                    <span class="radio-label excused">Excused</span>
+                                </label>
+                            </div>
+                            
+                            <div class="remarks-field">
+                                <input type="text" name="{{ form.remarks.html_name }}" value="{{ form.instance.remarks|default:'' }}" placeholder="Remarks (optional)" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <p>No students are enrolled in this course.</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update Attendance
+                </button>
+                <a href="{% url 'attendance_record_detail' attendance_record.id %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .attendance-form {
+        padding: 1rem 0;
+    }
+    
+    .attendance-controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .formset-container {
+        margin-bottom: 2rem;
+    }
+    
+    .formset-row {
+        background-color: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .student-attendance {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .student-info {
+        min-width: 200px;
+        flex: 1;
+    }
+    
+    .student-name {
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .student-id {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+    }
+    
+    .attendance-options {
+        flex: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .radio-option {
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
+        cursor: pointer;
+    }
+    
+    .radio-option input[type="radio"] {
+        margin-right: 0.5rem;
+    }
+    
+    .radio-label {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .radio-label.present {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #2ecc71;
+    }
+    
+    .radio-label.absent {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+    }
+    
+    .radio-label.late {
+        background-color: rgba(243, 156, 18, 0.1);
+        color: #f39c12;
+    }
+    
+    .radio-label.excused {
+        background-color: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+    }
+    
+    .remarks-field {
+        margin-top: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-600);
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .student-attendance {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .student-info {
+            margin-bottom: 0.5rem;
+        }
+        
+        .attendance-options {
+            width: 100%;
+        }
+    }
+</style>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mark all buttons
+        const markAllButtons = document.querySelectorAll('.mark-all');
+        markAllButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const status = this.dataset.status;
+                const radioInputs = document.querySelectorAll(`input[type="radio"][value="${status}"]`);
+                radioInputs.forEach(input => {
+                    input.checked = true;
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

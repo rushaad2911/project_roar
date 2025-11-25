@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}My Attendance - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>My Attendance Report</h1>
+    <p>View your attendance records and statistics</p>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>Attendance Overview</h3>
+            </div>
+            <div class="card-body">
+                <div class="attendance-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ total }}</div>
+                        <div class="stat-label">Total Classes</div>
+                    </div>
+                    <div class="stat-item present">
+                        <div class="stat-value">{{ present }}</div>
+                        <div class="stat-label">Present</div>
+                    </div>
+                    <div class="stat-item absent">
+                        <div class="stat-value">{{ absent }}</div>
+                        <div class="stat-label">Absent</div>
+                    </div>
+                    <div class="stat-item late">
+                        <div class="stat-value">{{ late }}</div>
+                        <div class="stat-label">Late</div>
+                    </div>
+                    <div class="stat-item excused">
+                        <div class="stat-value">{{ excused }}</div>
+                        <div class="stat-label">Excused</div>
+                    </div>
+                </div>
+                
+                <div class="attendance-percentage">
+                    <div class="percentage-label">
+                        <span>Attendance Percentage</span>
+                        <span>{{ present_percentage|floatformat:1 }}%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: {{ present_percentage }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="attendance-chart-container">
+                    <canvas id="attendanceChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Attendance Records</h3>
+    </div>
+    <div class="card-body">
+        {% if attendances %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Course</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendances %}
+                    <tr>
+                        <td>{{ attendance.attendance_record.date }}</td>
+                        <td>{{ attendance.attendance_record.course.name }} ({{ attendance.attendance_record.course.code }})</td>
+                        <td>
+                            <span class="badge {% if attendance.status == 'present' %}badge-success{% elif attendance.status == 'absent' %}badge-danger{% elif attendance.status == 'late' %}badge-warning{% else %}badge-info{% endif %}">
+                                {{ attendance.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ attendance.remarks|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li><a href="?page=1">&laquo; First</a></li>
+                <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% else %}
+                <li class="disabled"><span>&laquo; First</span></li>
+                <li class="disabled"><span>Previous</span></li>
+                {% endif %}
+                
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }}</span></li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li><a href="?page={{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                <li><a href="?page={{ paginator.num_pages }}">Last &raquo;</a></li>
+                {% else %}
+                <li class="disabled"><span>Next</span></li>
+                <li class="disabled"><span>Last &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <h4>No Attendance Records Found</h4>
+            <p>There are no attendance records available for you yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .attendance-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        flex: 1;
+        min-width: 120px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .stat-item.present {
+        background-color: rgba(46, 204, 113, 0.1);
+    }
+    
+    .stat-item.present .stat-value {
+        color: #2ecc71;
+    }
+    
+    .stat-item.absent {
+        background-color: rgba(231, 76, 60, 0.1);
+    }
+    
+    .stat-item.absent .stat-value {
+        color: #e74c3c;
+    }
+    
+    .stat-item.late {
+        background-color: rgba(243, 156, 18, 0.1);
+    }
+    
+    .stat-item.late .stat-value {
+        color: #f39c12;
+    }
+    
+    .stat-item.excused {
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    .stat-item.excused .stat-value {
+        color: #3498db;
+    }
+    
+    .attendance-percentage {
+        margin: 2rem 0;
+    }
+    
+    .percentage-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .progress {
+        height: 1rem;
+        background-color: #e9ecef;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background-color: #2ecc71;
+    }
+    
+    .attendance-chart-container {
+        margin-top: 2rem;
+        height: 300px;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+    
+    .badge-success {
+        color: #fff;
+        background-color: #2ecc71;
+    }
+    
+    .badge-danger {
+        color: #fff;
+        background-color: #e74c3c;
+    }
+    
+    .badge-warning {
+        color: #212529;
+        background-color: #f39c12;
+    }
+    
+    .badge-info {
+        color: #fff;
+        background-color: #3498db;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+    
+    .empty-state p {
+        color: var(--gray-600);
+    }
+</style>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attendance Chart
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        
+        // Data from the context
+        const attendanceData = {
+            labels: ['Present', 'Absent', 'Late', 'Excused'],
+            datasets: [{
+                label: 'Attendance Status',
+                data: [{{ present }}, {{ absent }}, {{ late }}, {{ excused }}],
+                backgroundColor: [
+                    'rgba(46, 204, 113, 0.7)',  // Present - Green
+                    'rgba(231, 76, 60, 0.7)',   // Absent - Red
+                    'rgba(243, 156, 18, 0.7)',  // Late - Yellow
+                    'rgba(52, 152, 219, 0.7)'   // Excused - Blue
+                ],
+                borderColor: [
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(231, 76, 60, 1)',
+                    'rgba(243, 156, 18, 1)',
+                    'rgba(52, 152, 219, 1)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        new Chart(attendanceCtx, {
+            type: 'doughnut',
+            data: attendanceData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Attendance Distribution'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

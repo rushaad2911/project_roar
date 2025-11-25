@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}My Courses - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>My Courses</h1>
+    <p>View all your enrolled courses and their details</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Enrolled Courses</h3>
+    </div>
+    <div class="card-body">
+        {% if enrollments %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Code</th>
+                        <th>Credits</th>
+                        <th>Enrollment Date</th>
+                        <th>Status</th>
+                        <th>Grade</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in enrollments %}
+                    <tr>
+                        <td>{{ enrollment.course.name }}</td>
+                        <td>{{ enrollment.course.code }}</td>
+                        <td>{{ enrollment.course.credits }}</td>
+                        <td>{{ enrollment.enrollment_date }}</td>
+                        <td>
+                            <span class="badge {% if enrollment.status == 'active' %}badge-success{% elif enrollment.status == 'completed' %}badge-info{% else %}badge-warning{% endif %}">
+                                {{ enrollment.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ enrollment.grade|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'course_detail' enrollment.course.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View Course
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li><a href="?page=1">&laquo; First</a></li>
+                <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% else %}
+                <li class="disabled"><span>&laquo; First</span></li>
+                <li class="disabled"><span>Previous</span></li>
+                {% endif %}
+                
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }}</span></li>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li><a href="?page={{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                <li><a href="?page={{ paginator.num_pages }}">Last &raquo;</a></li>
+                {% else %}
+                <li class="disabled"><span>Next</span></li>
+                <li class="disabled"><span>Last &raquo;</span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <h4>No Courses Found</h4>
+            <p>You are not enrolled in any courses yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+    
+    .badge-success {
+        color: #fff;
+        background-color: #2ecc71;
+    }
+    
+    .badge-info {
+        color: #fff;
+        background-color: #3498db;
+    }
+    
+    .badge-warning {
+        color: #212529;
+        background-color: #f39c12;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        margin-bottom: 0.5rem;
+        color: var(--gray-700);
+    }
+    
+    .empty-state p {
+        color: var(--gray-600);
+    }
+</style>
+{% endblock %}

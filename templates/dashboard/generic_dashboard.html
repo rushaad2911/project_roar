@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Welcome to the Institute Management System</h1>
+    <p>Hello, {{ user.get_full_name|default:user.username }}!</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Account Status</h3>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> {{ message }}
+        </div>
+        
+        <div class="user-info-section">
+            <h4>Your Account Information</h4>
+            <div class="user-info-grid">
+                <div class="info-item">
+                    <span class="info-label">Username:</span>
+                    <span class="info-value">{{ user.username }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{{ user.email|default:"Not provided" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Full Name:</span>
+                    <span class="info-value">{{ user.get_full_name|default:"Not provided" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">User Type:</span>
+                    <span class="info-value">{{ user.get_user_type_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Date Joined:</span>
+                    <span class="info-value">{{ user.date_joined|date:"F d, Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Last Login:</span>
+                    <span class="info-value">{{ user.last_login|date:"F d, Y H:i"|default:"Never" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="quick-actions">
+            <a href="{% url 'profile' %}" class="btn btn-primary">
+                <i class="fas fa-user-edit"></i> Update Profile
+            </a>
+            <a href="{% url 'logout' %}" class="btn btn-outline">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .user-info-section {
+        margin: 2rem 0;
+    }
+    
+    .user-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .info-item {
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .info-label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #6c757d;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+    }
+    
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}

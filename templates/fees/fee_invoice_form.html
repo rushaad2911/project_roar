@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Edit Invoice{% else %}Create Invoice{% endif %} - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>{% if object %}Edit Invoice{% else %}Create Invoice{% endif %}</h1>
+    <p>{% if object %}Update invoice details{% else %}Create a new fee invoice{% endif %}</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Invoice Details</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" class="invoice-form">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                <p class="error-message">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="{{ form.student.id_for_label }}">
+                        <i class="fas fa-user-graduate"></i> Student
+                    </label>
+                    {{ form.student }}
+                    {% if form.student.errors %}
+                    <div class="field-errors">
+                        {% for error in form.student.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group col-md-6">
+                    <label for="{{ form.due_date.id_for_label }}">
+                        <i class="fas fa-calendar-alt"></i> Due Date
+                    </label>
+                    {{ form.due_date }}
+                    {% if form.due_date.errors %}
+                    <div class="field-errors">
+                        {% for error in form.due_date.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="{{ form.total_amount.id_for_label }}">
+                        <i class="fas fa-dollar-sign"></i> Total Amount
+                    </label>
+                    {{ form.total_amount }}
+                    {% if form.total_amount.errors %}
+                    <div class="field-errors">
+                        {% for error in form.total_amount.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <small class="form-text text-muted">This will be calculated automatically from the items below.</small>
+                </div>
+                
+                <div class="form-group col-md-6">
+                    <label for="{{ form.status.id_for_label }}">
+                        <i class="fas fa-info-circle"></i> Status
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <div class="field-errors">
+                        {% for error in form.status.errors %}
+                        <p class="error-message">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.notes.id_for_label }}">
+                    <i class="fas fa-sticky-note"></i> Notes
+                </label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                <div class="field-errors">
+                    {% for error in form.notes.errors %}
+                    <p class="error-message">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="formset-container">
+                <h4>Invoice Items</h4>
+                
+                {{ items_formset.management_form }}
+                
+                <div class="formset-rows">
+                    {% for item_form in items_formset %}
+                    <div class="formset-row">
+                        <div class="row-header">
+                            <h5>Item #{{ forloop.counter }}</h5>
+                            {% if items_formset.can_delete %}
+                            <button type="button" class="btn btn-sm btn-outline delete-formset-row">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                            {% endif %}
+                        </div>
+                        
+                        {% if item_form.non_field_errors %}
+                        <div class="form-errors">
+                            {% for error in item_form.non_field_errors %}
+                            <p class="error-message">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% for hidden_field in item_form.hidden_fields %}
+                        {{ hidden_field }}
+                        {% endfor %}
+                        
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="{{ item_form.category.id_for_label }}">
+                                    <i class="fas fa-tag"></i> Fee Category
+                                </label>
+                                {{ item_form.category }}
+                                {% if item_form.category.errors %}
+                                <div class="field-errors">
+                                    {% for error in item_form.category.errors %}
+                                    <p class="error-message">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group col-md-6">
+                                <label for="{{ item_form.amount.id_for_label }}">
+                                    <i class="fas fa-dollar-sign"></i> Amount
+                                </label>
+                                {{ item_form.amount }}
+                                {% if item_form.amount.errors %}
+                                <div class="field-errors">
+                                    {% for error in item_form.amount.errors %}
+                                    <p class="error-message">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ item_form.description.id_for_label }}">
+                                <i class="fas fa-align-left"></i> Description
+                            </label>
+                            {{ item_form.description }}
+                            {% if item_form.description.errors %}
+                            <div class="field-errors">
+                                {% for error in item_form.description.errors %}
+                                <p class="error-message">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Optional. If left blank, the category description will be used.</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="formset-actions">
+                    <button type="button" class="btn btn-outline add-formset-row">
+                        <i class="fas fa-plus"></i> Add Another Item
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {% if object %}Update{% else %}Create{% endif %} Invoice
+                </button>
+                <a href="{% url 'fee_invoice_list' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .invoice-form {
+        padding: 1rem 0;
+    }
+    
+    .formset-container {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background-color: var(--gray-100);
+        border-radius: var(--border-radius);
+    }
+    
+    .formset-container h4 {
+        margin-bottom: 1.5rem;
+        color: var(--gray-700);
+    }
+    
+    .formset-row {
+        background-color: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .row-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--gray-300);
+    }
+    
+    .row-header h5 {
+        margin-bottom: 0;
+        color: var(--gray-700);
+    }
+    
+    .formset-actions {
+        margin-top: 1rem;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle adding new formset rows
+        const addButton = document.querySelector('.add-formset-row');
+        if (addButton) {
+            addButton.addEventListener('click', function() {
+                const formsetContainer = document.querySelector('.formset-container');
+                const totalFormsInput = formsetContainer.querySelector('[name$="-TOTAL_FORMS"]');
+                const formRows = formsetContainer.querySelectorAll('.formset-row');
+                
+                if (formRows.length > 0) {
+                    // Clone the last form
+                    const lastForm = formRows[formRows.length - 1];
+                    const newForm = lastForm.cloneNode(true);
+                    
+                    // Update form index
+                    const currentFormCount = parseInt(totalFormsInput.value);
+                    const newFormHtml = newForm.innerHTML.replace(
+                        new RegExp(`-${currentFormCount - 1}-`, 'g'), 
+                        `-${currentFormCount}-`
+                    );
+                    newForm.innerHTML = newFormHtml;
+                    
+                    // Update the row header
+                    const rowHeader = newForm.querySelector('.row-header h5');
+                    if (rowHeader) {
+                        rowHeader.textContent = `Item #${currentFormCount + 1}`;
+                    }
+                    
+                    // Clear input values
+                    const inputs = newForm.querySelectorAll('input:not([type="hidden"]), select, textarea');
+                    inputs.forEach(input => {
+                        input.value = '';
+                    });
+                    
+                    // Increment form count
+                    totalFormsInput.value = currentFormCount + 1;
+                    
+                    // Add the new form
+                    formsetContainer.querySelector('.formset-rows').appendChild(newForm);
+                }
+            });
+        }
+        
+        // Handle deleting formset rows
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('delete-formset-row') || 
+                e.target.parentElement && e.target.parentElement.classList.contains('delete-formset-row')) {
+                
+                e.preventDefault();
+                const button = e.target.classList.contains('delete-formset-row') ? e.target : e.target.parentElement;
+                const row = button.closest('.formset-row');
+                const formsetContainer = row.closest('.formset-container');
+                const deleteInput = row.querySelector('input[name$="-DELETE"]');
+                
+                if (deleteInput) {
+                    // Mark for deletion (Django formset style)
+                    deleteInput.value = 'on';
+                    row.style.display = 'none';
+                } else {
+                    // Just remove the row if it's a new form
+                    row.remove();
+                    
+                    // Update total forms count
+                    const totalFormsInput = formsetContainer.querySelector('[name$="-TOTAL_FORMS"]');
+                    const formRows = formsetContainer.querySelectorAll('.formset-row');
+                    totalFormsInput.value = formRows.length;
+                }
+            }
+        });
+        
+        // Calculate total amount from items
+        function calculateTotal() {
+            let total = 0;
+            const amountInputs = document.querySelectorAll('.formset-row:not([style*="display: none"]) [name$="-amount"]');
+            
+            amountInputs.forEach(input => {
+                const value = parseFloat(input.value);
+                if (!isNaN(value)) {
+                    total += value;
+                }
+            });
+            
+            const totalAmountInput = document.querySelector('#id_total_amount');
+            if (totalAmountInput) {
+                totalAmountInput.value = total.toFixed(2);
+            }
+        }
+        
+        // Update total when amount changes
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.name && e.target.name.includes('-amount')) {
+                calculateTotal();
+            }
+        });
+        
+        // Initial calculation
+        calculateTotal();
+    });
+</script>
+{% endblock %}
+{% endblock %}

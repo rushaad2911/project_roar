@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Course - Institute Management System{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Delete Course</h1>
+    <p>Confirm deletion of course</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Confirm Deletion</h3>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> Warning: This action cannot be undone.
+        </div>
+        
+        <p>Are you sure you want to delete the course <strong>"{{ object.name }}"</strong> ({{ object.code }})?</p>
+        
+        <div class="course-details">
+            <div class="detail-item">
+                <div class="detail-label">Course Name:</div>
+                <div class="detail-value">{{ object.name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Course Code:</div>
+                <div class="detail-value">{{ object.code }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Credits:</div>
+                <div class="detail-value">{{ object.credits }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Description:</div>
+                <div class="detail-value">{{ object.description|default:"No description provided" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Teachers:</div>
+                <div class="detail-value">
+                    {% for teacher in object.teachers.all %}
+                    <span class="teacher-badge">{{ teacher.user.get_full_name }}</span>
+                    {% empty %}
+                    <span class="text-muted">None</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        {% if object.enrollments.exists %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle"></i> This course has {{ object.enrollments.count }} enrolled students. Deleting it will also delete all enrollment records.
+        </div>
+        {% endif %}
+        
+        {% if object.schedules.exists %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle"></i> This course has {{ object.schedules.count }} scheduled sessions. Deleting it will also delete all schedule records.
+        </div>
+        {% endif %}
+        
+        {% if object.attendance_records.exists %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle"></i> This course has {{ object.attendance_records.count }} attendance records. Deleting it will also delete all attendance data.
+        </div>
+        {% endif %}
+        
+        <form method="post" class="delete-form">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Confirm Delete
+                </button>
+                <a href="{% url 'course_detail' object.id %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .course-details {
+        background-color: var(--gray-100);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .detail-item {
+        display: flex;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid var(--gray-300);
+        padding-bottom: 0.75rem;
+    }
+    
+    .detail-item:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        width: 120px;
+        color: var(--gray-700);
+    }
+    
+    .teacher-badge {
+        display: inline-block;
+        background-color: var(--gray-200);
+        color: var(--gray-700);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .form-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+</style>
+{% endblock %}
