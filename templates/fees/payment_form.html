@@ -3,25 +3,26 @@
 {% block title %}Make Payment - Institute Management System{% endblock %}
 
 {% block content %}
+
 <div class="dashboard-header">
     <h1>Make Payment</h1>
     {% if invoice %}
-    <p>Create a new payment for Invoice #{{ invoice.invoice_number }}</p>
+        <p>Create a new payment for Invoice #{{ invoice.invoice_number }}</p>
     {% else %}
-    <p>Create a new payment</p>
+        <p>Create a new payment</p>
     {% endif %}
 </div>
 
 <div class="row">
+
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header">
-                <h3>Payment Details</h3>
-            </div>
+            <div class="card-header"><h3>Payment Details</h3></div>
             <div class="card-body">
-                <form method="post" class="payment-form">
+
+                <form method="post" class="payment-form" id="paymentForm">
                     {% csrf_token %}
-                    
+
                     {% if form.non_field_errors %}
                     <div class="form-errors">
                         {% for error in form.non_field_errors %}
@@ -29,251 +30,165 @@
                         {% endfor %}
                     </div>
                     {% endif %}
-                    
+
                     {% if not invoice %}
                     <div class="form-group">
                         <label for="{{ form.invoice.id_for_label }}">
                             <i class="fas fa-file-invoice"></i> Invoice
                         </label>
                         {{ form.invoice }}
-                        {% if form.invoice.errors %}
-                        <div class="field-errors">
-                            {% for error in form.invoice.errors %}
-                            <p class="error-message">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
                     </div>
                     {% endif %}
-                    
+
+                    <!-- ======= AMOUNT FIELD WITH VALIDATION ======= -->
                     <div class="form-group">
                         <label for="{{ form.amount.id_for_label }}">
                             <i class="fas fa-dollar-sign"></i> Amount
                         </label>
-                        {{ form.amount }}
-                        {% if form.amount.errors %}
-                        <div class="field-errors">
-                            {% for error in form.amount.errors %}
-                            <p class="error-message">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+
+                        <!-- Apply HTML max only if invoice exists -->
                         {% if invoice %}
-                        <small class="form-text text-muted">Balance due: ₹{{ invoice.balance|floatformat:2 }}</small>
+                            <input type="number" 
+                                   name="{{ form.amount.name }}" 
+                                   id="{{ form.amount.id_for_label }}"
+                                   value="{{ form.amount.value|default_if_none:'' }}"
+                                   step="0.01"
+                                   min="0"
+                                   max="{{ invoice.balance }}"
+                                   class="form-control"
+                                   required>
+                        {% else %}
+                            {{ form.amount }}
                         {% endif %}
+
+                        <small class="form-text text-muted">
+                            {% if invoice %}Balance due: ₹{{ invoice.balance|floatformat:2 }}{% endif %}
+                        </small>
+
+                        <!-- Dynamic client-side error -->
+                        <p id="amountError" class="error-message" style="display:none;"></p>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="{{ form.payment_method.id_for_label }}">
                             <i class="fas fa-credit-card"></i> Payment Method
                         </label>
                         {{ form.payment_method }}
-                        {% if form.payment_method.errors %}
-                        <div class="field-errors">
-                            {% for error in form.payment_method.errors %}
-                            <p class="error-message">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="{{ form.transaction_id.id_for_label }}">
                             <i class="fas fa-hashtag"></i> Transaction ID
                         </label>
                         {{ form.transaction_id }}
-                        {% if form.transaction_id.errors %}
-                        <div class="field-errors">
-                            {% for error in form.transaction_id.errors %}
-                            <p class="error-message">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-                        <small class="form-text text-muted">Reference number for the transaction (optional)</small>
+                        <small class="form-text text-muted">Reference number </small>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="{{ form.notes.id_for_label }}">
                             <i class="fas fa-sticky-note"></i> Notes
                         </label>
                         {{ form.notes }}
-                        {% if form.notes.errors %}
-                        <div class="field-errors">
-                            {% for error in form.notes.errors %}
-                            <p class="error-message">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
                     </div>
-                    
+
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">
                             <i class="fas fa-save"></i> Submit Payment
                         </button>
+
                         <a href="{% if invoice %}{% url 'fee_invoice_detail' invoice.pk %}{% else %}{% url 'payment_list' %}{% endif %}" class="btn btn-outline">
                             <i class="fas fa-times"></i> Cancel
                         </a>
                     </div>
+
                 </form>
+
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
+
         {% if invoice %}
         <div class="card">
-            <div class="card-header">
-                <h3>Invoice Summary</h3>
-            </div>
+            <div class="card-header"><h3>Invoice Summary</h3></div>
             <div class="card-body">
                 <div class="invoice-summary">
-                    <div class="summary-item">
-                        <div class="summary-label">Invoice Number</div>
-                        <div class="summary-value">{{ invoice.invoice_number }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Student</div>
-                        <div class="summary-value">{{ invoice.student.user.get_full_name }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Issue Date</div>
-                        <div class="summary-value">{{ invoice.issue_date }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Due Date</div>
-                        <div class="summary-value">{{ invoice.due_date }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Total Amount</div>
-                        <div class="summary-value">₹{{ invoice.total_amount|floatformat:2 }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Paid Amount</div>
-                        <div class="summary-value">₹{{ invoice.paid_amount|floatformat:2 }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Balance Due</div>
-                        <div class="summary-value">₹{{ invoice.balance|floatformat:2 }}</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">Status</div>
-                        <div class="summary-value">
-                            <span class="status-badge {% if invoice.status == 'paid' %}status-paid{% elif invoice.status == 'pending' %}status-pending{% elif invoice.status == 'overdue' %}status-overdue{% else %}status-cancelled{% endif %}">
-                                {{ invoice.get_status_display }}
-                            </span>
-                        </div>
+                    <div class="summary-item"><span>Invoice Number</span><span>{{ invoice.invoice_number }}</span></div>
+                    <div class="summary-item"><span>Student</span><span>{{ invoice.student.user.get_full_name }}</span></div>
+                    <div class="summary-item"><span>Issue Date</span><span>{{ invoice.issue_date }}</span></div>
+                    <div class="summary-item"><span>Due Date</span><span>{{ invoice.due_date }}</span></div>
+                    <div class="summary-item"><span>Total Amount</span><span>₹{{ invoice.total_amount|floatformat:2 }}</span></div>
+                    <div class="summary-item"><span>Paid Amount</span><span>₹{{ invoice.paid_amount|floatformat:2 }}</span></div>
+                    <div class="summary-item"><span>Balance Due</span><span>₹{{ invoice.balance|floatformat:2 }}</span></div>
+                    <div class="summary-item"><span>Status</span>
+                        <span class="status-badge">{{ invoice.get_status_display }}</span>
                     </div>
                 </div>
             </div>
         </div>
         {% endif %}
-        
+
+        <!-- Payment instructions kept same -->
         <div class="card">
-            <div class="card-header">
-                <h3>Payment Instructions</h3>
-            </div>
+            <div class="card-header"><h3>Payment Instructions</h3></div>
             <div class="card-body">
-                <div class="payment-instructions">
-                    <h4>Cash Payment</h4>
-                    <p>Visit the institute's finance office to make a cash payment.</p>
-                    
-                    <h4>Bank Transfer</h4>
-                    <p>Transfer the amount to the following account:</p>
-                    <ul>
-                        <li>Bank Name: Example Bank</li>
-                        <li>Account Name: Institute Management System</li>
-                        <li>Account Number: 1234567890</li>
-                        <li>IFSC Code: EXBK0001234</li>
-                    </ul>
-                    <p>Please include the invoice number in the transaction reference.</p>
-                    
-                    <h4>Credit Card</h4>
-                    <p>Credit card payments can be made at the finance office or through the online payment portal.</p>
-                </div>
+                <p>For cash, visit finance office.</p>
+                <h4>Bank Transfer</h4>
+                <ul>
+                    <li>Bank: Example Bank</li>
+                    <li>Account: Institute Management System</li>
+                    <li>Account No: 1234567890</li>
+                    <li>IFSC: EXBK0001234</li>
+                </ul>
+                <p>Include invoice number in reference.</p>
             </div>
         </div>
+
     </div>
 </div>
 
+<!-- ===== Client-Side Validation Script ===== -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const amountField = document.getElementById("{{ form.amount.id_for_label }}");
+    const errorText = document.getElementById("amountError");
+    const submitBtn = document.getElementById("submitBtn");
+
+    {% if invoice %}
+    const maxAmount = parseFloat("{{ invoice.balance }}");
+    {% else %}
+    const maxAmount = null;
+    {% endif %}
+
+    if (amountField && maxAmount !== null) {
+
+        amountField.addEventListener("input", () => {
+            const value = parseFloat(amountField.value || 0);
+
+            if (value > maxAmount) {
+                amountField.style.border = "2px solid #e74c3c";
+                errorText.style.display = "block";
+                errorText.innerText = `Amount cannot exceed ₹${maxAmount.toFixed(2)}`;
+                submitBtn.disabled = true;
+            } else {
+                amountField.style.border = "";
+                errorText.style.display = "none";
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
+});
+</script>
+
 <style>
-    .payment-form {
-        padding: 1rem 0;
-    }
-    
-    .form-actions {
-        margin-top: 2rem;
-        display: flex;
-        gap: 1rem;
-    }
-    
-    .invoice-summary {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    
-    .summary-item {
-        display: flex;
-        justify-content: space-between;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px solid var(--gray-200);
-    }
-    
-    .summary-label {
-        font-weight: 600;
-        color: var(--gray-700);
-    }
-    
-    .summary-value {
-        text-align: right;
-    }
-    
-    .status-badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-    
-    .status-paid {
-        background-color: rgba(46, 204, 113, 0.2);
-        color: #2ecc71;
-    }
-    
-    .status-pending {
-        background-color: rgba(243, 156, 18, 0.2);
-        color: #f39c12;
-    }
-    
-    .status-overdue {
-        background-color: rgba(231, 76, 60, 0.2);
-        color: #e74c3c;
-    }
-    
-    .status-cancelled {
-        background-color: rgba(108, 117, 125, 0.2);
-        color: #6c757d;
-    }
-    
-    .payment-instructions {
-        font-size: 0.9rem;
-    }
-    
-    .payment-instructions h4 {
-        font-size: 1rem;
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
-        color: var(--gray-700);
-    }
-    
-    .payment-instructions ul {
-        padding-left: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .payment-instructions p {
-        margin-bottom: 0.75rem;
-    }
+.error-message {
+    color: #e74c3c;
+    margin-top: 4px;
+    font-size: 0.85rem;
+}
 </style>
+
 {% endblock %}
