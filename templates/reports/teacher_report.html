@@ -2,12 +2,16 @@
 {% block title %}Teacher Report - ROAR{% endblock %}
 
 {% block content %}
+
 <div class="dashboard-header">
     <h1>Teacher Report</h1>
-    <p>Statistics about teachers and teaching distribution.</p>
+    <p>Detailed analytics on teachers, experience, and teaching distribution.</p>
 </div>
 
+<!-- ======================== STATS SUMMARY ======================== -->
 <div class="stats-grid">
+
+    <!-- Total Teachers -->
     <div class="stat-card primary">
         <div class="stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
         <div class="stat-content">
@@ -16,16 +20,43 @@
         </div>
     </div>
 
-    <div class="stat-card warning">
-        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+    <!-- Avg Experience -->
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-award"></i></div>
         <div class="stat-content">
-            <h3>{{ avg_experience|floatformat:1 }}</h3>
-            <p>Avg Experience (Years)</p>
+            <h3>{{ avg_experience|default:0|floatformat:1 }} yrs</h3>
+            <p>Average Experience</p>
         </div>
     </div>
+
+    <!-- Teachers with Courses -->
+    <div class="stat-card info">
+        <div class="stat-icon"><i class="fas fa-book-open"></i></div>
+        <div class="stat-content">
+            <h3>{{ teachers_with_courses|length }}</h3>
+            <p>Active Teachers</p>
+        </div>
+    </div>
+
+    <!-- Highest Experience -->
+    <div class="stat-card warning">
+        <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
+        <div class="stat-content">
+            <h3>
+                {% with teachers_with_courses|first as t %}
+                    {% if t %}{{ t.experience }} yrs{% else %}0{% endif %}
+                {% endwith %}
+            </h3>
+            <p>Most Experienced</p>
+        </div>
+    </div>
+
 </div>
 
+<!-- ===================== FIRST CHART ROW ===================== -->
 <div class="row">
+
+    <!-- Gender Chart -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header"><h3>Gender Distribution</h3></div>
@@ -35,41 +66,161 @@
         </div>
     </div>
 
+    <!-- Courses Per Teacher -->
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header"><h3>Courses Per Teacher</h3></div>
+            <div class="card-header"><h3>Courses Assigned Per Teacher</h3></div>
             <div class="card-body chart-body">
                 <canvas id="courseCountChart"></canvas>
             </div>
         </div>
     </div>
+
 </div>
+
+<!-- ===================== SECOND CHART ROW ===================== -->
+<div class="row">
+
+    <!-- Experience Distribution -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Experience Distribution</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="experienceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Workload Comparison -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Teacher Workload (Courses)</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="workloadChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===================== THIRD CHART ROW ===================== -->
+<div class="row">
+
+    <!-- Top Teachers Bar -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header"><h3>Top Teachers By Experience</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="topTeachersChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+.chart-body {
+    height: 350px;
+}
+</style>
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
+    // ============= Data from backend =============
     const genderLabels = [{% for g in teachers_by_gender %}"{{ g.gender }}",{% endfor %}];
     const genderCounts = [{% for g in teachers_by_gender %}{{ g.count }},{% endfor %}];
 
-    new Chart(document.getElementById('teacherGenderChart'), {
-        type: 'doughnut',
-        data: { labels: genderLabels, datasets: [{ data: genderCounts }] }
-    });
+    const teacherNames = [{% for t in teachers_with_courses %}"{{ t.user.get_full_name }}",{% endfor %}];
+    const teacherCourseCounts = [{% for t in teachers_with_courses %}{{ t.course_count }},{% endfor %}];
+    const teacherExperience = [{% for t in teachers_with_courses %}{{ t.experience }},{% endfor %}];
 
-    new Chart(document.getElementById('courseCountChart'), {
-        type: 'bar',
+    // Top teachers sorted by experience (JS-level)
+    const sortedTeachers = teacherNames.map((name, i) => ({
+        name: name,
+        exp: teacherExperience[i]
+    })).sort((a, b) => b.exp - a.exp);
+
+    const topTeacherNames = sortedTeachers.map(t => t.name);
+    const topTeacherExp = sortedTeachers.map(t => t.exp);
+
+    // ============= Gender Pie Chart =============
+    new Chart(document.getElementById('teacherGenderChart'), {
+        type: 'pie',
         data: {
-            labels: [{% for t in teachers_with_courses %}"{{ t.user.get_full_name }}",{% endfor %}],
+            labels: genderLabels,
             datasets: [{
-                label: "Courses",
-                data: [{% for t in teachers_with_courses %}{{ t.course_count }},{% endfor %}]
+                data: genderCounts,
+                backgroundColor: [
+                    "rgba(52, 152, 219, 0.7)",
+                    "rgba(231, 76, 60, 0.7)",
+                    "rgba(46, 204, 113, 0.7)"
+                ]
             }]
         }
     });
+
+    // ============= Courses Per Teacher =============
+    new Chart(document.getElementById('courseCountChart'), {
+        type: 'bar',
+        data: {
+            labels: teacherNames,
+            datasets: [{
+                label: "Courses Assigned",
+                data: teacherCourseCounts,
+                backgroundColor: "rgba(46, 204, 113, 0.7)"
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    // ============= Experience Distribution =============
+    new Chart(document.getElementById('experienceChart'), {
+        type: 'line',
+        data: {
+            labels: teacherNames,
+            datasets: [{
+                label: "Years of Experience",
+                data: teacherExperience,
+                borderColor: "rgba(52, 152, 219, 1)",
+                backgroundColor: "rgba(52, 152, 219, 0.25)",
+                tension: 0.4
+            }]
+        }
+    });
+
+    // ============= Workload Comparison (Horizontal Bar) =============
+    new Chart(document.getElementById('workloadChart'), {
+        type: 'bar',
+        data: {
+            labels: teacherNames,
+            datasets: [{
+                label: "Teaching Load",
+                data: teacherCourseCounts,
+                backgroundColor: "rgba(155, 89, 182, 0.7)"
+            }]
+        },
+        options: { indexAxis: 'y' }
+    });
+
+    // ============= Top Teachers by Experience =============
+    new Chart(document.getElementById('topTeachersChart'), {
+        type: 'bar',
+        data: {
+            labels: topTeacherNames,
+            datasets: [{
+                label: "Experience (Years)",
+                data: topTeacherExp,
+                backgroundColor: "rgba(241, 196, 15, 0.7)"
+            }]
+        }
+    });
+
 });
 </script>
 {% endblock %}

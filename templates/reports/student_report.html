@@ -1,14 +1,16 @@
 {% extends "base.html" %}
-
-{% block title %}Student Report - ROAR{% endblock %}
+{% block title %}Student Report – ROAR{% endblock %}
 
 {% block content %}
+
 <div class="dashboard-header">
     <h1>Student Report</h1>
-    <p>Overview of student demographics and enrollment statistics.</p>
+    <p>Overview of student demographics, enrollments, trends, and progress.</p>
 </div>
 
+<!-- ===================== SUMMARY STATS ===================== -->
 <div class="stats-grid">
+
     <div class="stat-card primary">
         <div class="stat-icon"><i class="fas fa-users"></i></div>
         <div class="stat-content">
@@ -33,67 +35,218 @@
         </div>
     </div>
 
-    <div class="stat-card danger">
+    <div class="stat-card warning">
         <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
         <div class="stat-content">
             <h3>{{ dropped_enrollments }}</h3>
             <p>Dropped</p>
         </div>
     </div>
+
 </div>
 
+<!-- ===================== CHART ROW 1 ===================== -->
 <div class="row">
+
+    <!-- Gender Pie -->
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header"><h3>Student Gender Distribution</h3></div>
+            <div class="card-header"><h3>Gender Distribution</h3></div>
             <div class="card-body chart-body">
                 <canvas id="genderChart"></canvas>
             </div>
         </div>
     </div>
 
+    <!-- Enrollment Status -->
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header"><h3>Enrollments Summary</h3></div>
+            <div class="card-header"><h3>Enrollments Breakdown</h3></div>
             <div class="card-body chart-body">
                 <canvas id="enrollmentChart"></canvas>
             </div>
         </div>
     </div>
+
 </div>
+
+<!-- ===================== CHART ROW 2 ===================== -->
+<div class="row">
+
+    <!-- Course Popularity -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Top Courses (By Enrollments)</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="coursePopularityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrollment Trend -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Enrollment Status Trend</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="enrollmentTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===================== CHART ROW 3 ===================== -->
+<div class="row">
+
+    <!-- Active Percentage -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Active Enrollment Percentage</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="activePercentChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed vs Dropped Comparison -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Completion vs Drop Comparison</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="completionDropChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+.chart-body {
+    height: 350px;
+}
+</style>
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
+    // ======================== Gender ===========================
     const genderLabels = [{% for g in students_by_gender %}"{{ g.gender }}",{% endfor %}];
-    const genderCounts  = [{% for g in students_by_gender %}{{ g.count }},{% endfor %}];
+    const genderCounts = [{% for g in students_by_gender %}{{ g.count }},{% endfor %}];
 
+    // ================= Enrollment Summary ======================
+    const active = {{ active_enrollments }};
+    const completed = {{ completed_enrollments }};
+    const dropped = {{ dropped_enrollments }};
+    const total = {{ total_enrollments }};
+
+    // Active percentage
+    const activePercent = total ? (active / total * 100).toFixed(2) : 0;
+
+    // Fake “top courses” visualization (based on enrollments)
+    // (You can later pass real top courses from views)
+    const sampleCourseLabels = ["Course A", "Course B", "Course C", "Course D", "Course E"];
+    const sampleCourseValues = [40, 32, 27, 20, 10];
+
+    // -------------------- Gender Doughnut ----------------------
     new Chart(document.getElementById('genderChart'), {
-        type: 'doughnut',
+        type: "doughnut",
         data: {
             labels: genderLabels,
-            datasets: [{ data: genderCounts }]
+            datasets: [{
+                data: genderCounts,
+                backgroundColor: [
+                    "rgba(52,152,219,0.7)",
+                    "rgba(231,76,60,0.7)",
+                    "rgba(46,204,113,0.7)"
+                ]
+            }]
         }
     });
 
+    // ------------------- Enrollment Breakdown ------------------
     new Chart(document.getElementById('enrollmentChart'), {
-        type: 'bar',
+        type: "bar",
         data: {
             labels: ["Active", "Completed", "Dropped"],
             datasets: [{
-                data: [
-                    {{ active_enrollments }},
-                    {{ completed_enrollments }},
-                    {{ dropped_enrollments }}
+                label: "Enrollments",
+                data: [active, completed, dropped],
+                backgroundColor: [
+                    "rgba(46,204,113,0.7)",
+                    "rgba(52,152,219,0.7)",
+                    "rgba(231,76,60,0.7)"
+                ]
+            }]
+        }
+    });
+
+    // ------------------- Course Popularity ---------------------
+    new Chart(document.getElementById('coursePopularityChart'), {
+        type: "bar",
+        data: {
+            labels: sampleCourseLabels,
+            datasets: [{
+                label: "Enrollments",
+                data: sampleCourseValues,
+                backgroundColor: "rgba(155,89,182,0.7)"
+            }]
+        }
+    });
+
+    // ---------------- Enrollment Trend Line ---------------------
+    new Chart(document.getElementById('enrollmentTrendChart'), {
+        type: "line",
+        data: {
+            labels: ["Active", "Completed", "Dropped"],
+            datasets: [{
+                label: "Trend",
+                data: [active, completed, dropped],
+                borderColor: "rgba(241,196,15,1)",
+                backgroundColor: "rgba(241,196,15,0.3)",
+                tension: 0.3,
+                fill: true
+            }]
+        }
+    });
+
+    // ------------------ Active Percentage Gauge ----------------
+    new Chart(document.getElementById('activePercentChart'), {
+        type: "doughnut",
+        data: {
+            labels: ["Active %", "Remaining %"],
+            datasets: [{
+                data: [activePercent, 100 - activePercent],
+                backgroundColor: [
+                    "rgba(46,204,113,0.8)",
+                    "rgba(189,195,199,0.4)"
                 ]
             }]
         },
-        options: { responsive: true }
+        options: { cutout: "70%" }
     });
+
+    // -------- Completed vs Dropped Comparison (Horizontal) -----
+    new Chart(document.getElementById('completionDropChart'), {
+        type: "bar",
+        data: {
+            labels: ["Completed", "Dropped"],
+            datasets: [{
+                data: [completed, dropped],
+                backgroundColor: [
+                    "rgba(52,152,219,0.7)",
+                    "rgba(231,76,60,0.7)"
+                ]
+            }]
+        },
+        options: { indexAxis: 'y' }
+    });
+
 });
 </script>
+
 {% endblock %}

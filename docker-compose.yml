@@ -8,8 +8,8 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
       - .:/app
-    command: python manage.py runserver 0.0.0.0:8000
-    # command: gunicorn project_roar.wsgi:application --bind 0.0.0.0:8000
+    # command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn project_roar.wsgi:application --bind 0.0.0.0:8000
     restart: always
 
   nginx:

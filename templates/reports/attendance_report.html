@@ -2,12 +2,15 @@
 {% block title %}Attendance Report - ROAR{% endblock %}
 
 {% block content %}
+
 <div class="dashboard-header">
     <h1>Attendance Report</h1>
-    <p>Attendance statistics for all courses.</p>
+    <p>Statistics and trends of attendance across all courses.</p>
 </div>
 
+<!-- ===================== SUMMARY STATS ===================== -->
 <div class="stats-grid">
+
     <div class="stat-card primary">
         <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
         <div class="stat-content">
@@ -15,10 +18,29 @@
             <p>Total Attendance Records</p>
         </div>
     </div>
+
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-content">
+            <h3>
+                {% with p=0 a=0 %}
+                    {% for s in attendance_by_status %}
+                        {% if s.status == 'present' %}{% with p=s.count %}{% endwith %}{% endif %}
+                        {% if s.status == 'absent' %}{% with a=s.count %}{% endwith %}{% endif %}
+                    {% endfor %}
+                {% endwith %}
+            </h3>
+            <p>Present Records</p>
+        </div>
+    </div>
+
 </div>
 
+<!-- ===================== CHARTS ROW 1 ===================== -->
 <div class="row">
-    <div class="col-md-6">
+
+    <!-- Status Distribution -->
+    <div class="col-md-4">
         <div class="card">
             <div class="card-header"><h3>Status Distribution</h3></div>
             <div class="card-body chart-body">
@@ -27,50 +49,160 @@
         </div>
     </div>
 
-    <div class="col-md-6">
+    <!-- Course Present % -->
+    <div class="col-md-8">
         <div class="card">
-            <div class="card-header"><h3>Present % by Course</h3></div>
+            <div class="card-header"><h3>Present Percentage by Course</h3></div>
             <div class="card-body chart-body">
-                <canvas id="courseAttendanceChart"></canvas>
+                <canvas id="presentPercentChart"></canvas>
             </div>
         </div>
     </div>
+
 </div>
+
+<!-- ===================== CHARTS ROW 2 ===================== -->
+<div class="row">
+
+    <!-- Present vs Absent Bar -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Present vs Absent Count</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="presentAbsentChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engagement Trend -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Engagement Trend</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="engagementTrend"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===================== CHART ROW 3 ===================== -->
+<div class="row">
+
+    <!-- Heatmap (Course-wise total records) -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header"><h3>Course Load Heatmap (Total Records)</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="courseHeatmap"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+.chart-body {
+    height: 350px !important;
+}
+</style>
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    // Status counts
-    new Chart(document.getElementById('statusChart'), {
-        type: 'doughnut',
+    // ---------- Prepare Django data ----------
+    const statusLabels = [{% for s in attendance_by_status %}"{{ s.status }}",{% endfor %}];
+    const statusCounts = [{% for s in attendance_by_status %}{{ s.count }},{% endfor %}];
+
+    const courseLabels = [{% for c, s in course_attendance.items %}"{{ c.name }}",{% endfor %}];
+    const presentPercent = [{% for c, s in course_attendance.items %}{{ s.present_percentage|default:0 }},{% endfor %}];
+
+    const presentData = [{% for c, s in course_attendance.items %}{{ s.present }},{% endfor %}];
+    const absentData = [{% for c, s in course_attendance.items %}{{ s.absent }},{% endfor %}];
+    const totalData  = [{% for c, s in course_attendance.items %}{{ s.total }},{% endfor %}];
+
+
+    // =========== 1. Status Doughnut =============
+    new Chart(document.getElementById("statusChart"), {
+        type: "doughnut",
         data: {
-            labels: [{% for s in attendance_by_status %}"{{ s.status }}",{% endfor %}],
+            labels: statusLabels,
             datasets: [{
-                data: [{% for s in attendance_by_status %}{{ s.count }},{% endfor %}]
+                data: statusCounts,
+                backgroundColor: [
+                    "rgba(46,204,113,0.7)",
+                    "rgba(231,76,60,0.7)",
+                    "rgba(243,156,18,0.7)",
+                    "rgba(52,152,219,0.7)"
+                ]
             }]
         }
     });
 
-    // Course attendance %
-    new Chart(document.getElementById('courseAttendanceChart'), {
-        type: 'bar',
+    // =========== 2. Present % by Course ============
+    new Chart(document.getElementById("presentPercentChart"), {
+        type: "bar",
         data: {
-            labels: [{% for c, s in course_attendance.items %}"{{ c.name }}",{% endfor %}],
+            labels: courseLabels,
             datasets: [{
                 label: "Present %",
-                data: [{% for c, s in course_attendance.items %}{{ s.present_percentage|floatformat:1 }},{% endfor %}]
+                data: presentPercent,
+                backgroundColor: "rgba(46,204,113,0.7)"
             }]
         },
-        options: {
-            scales: {
-                y: { beginAtZero: true, max: 100 }
-            }
+        options: { scales: { y: { beginAtZero: true, max: 100 }}}
+    });
+
+    // =========== 3. Present vs Absent ============
+    new Chart(document.getElementById("presentAbsentChart"), {
+        type: "bar",
+        data: {
+            labels: courseLabels,
+            datasets: [
+                { label: "Present", data: presentData, backgroundColor: "rgba(46,204,113,0.7)" },
+                { label: "Absent", data: absentData, backgroundColor: "rgba(231,76,60,0.7)" }
+            ]
         }
     });
+
+    // =========== 4. Engagement Trend ============
+    new Chart(document.getElementById("engagementTrend"), {
+        type: "line",
+        data: {
+            labels: courseLabels,
+            datasets: [{
+                label: "Engagement (Present %)",
+                data: presentPercent,
+                borderColor: "rgba(52,152,219,1)",
+                backgroundColor: "rgba(52,152,219,0.3)",
+                fill: true,
+                tension: 0.3
+            }]
+        }
+    });
+
+    // =========== 5. Heatmap (Course load) ============
+    new Chart(document.getElementById("courseHeatmap"), {
+        type: "bar",
+        data: {
+            labels: courseLabels,
+            datasets: [{
+                label: "Total Attendance Records",
+                data: totalData,
+                backgroundColor: totalData.map(val =>
+                    val > 50 ? "rgba(231,76,60,0.8)" :
+                    val > 30 ? "rgba(241,196,15,0.8)" :
+                               "rgba(46,204,113,0.8)"
+                )
+            }]
+        }
+    });
+
 });
 </script>
 {% endblock %}

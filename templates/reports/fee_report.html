@@ -2,11 +2,13 @@
 {% block title %}Fee Report - ROAR{% endblock %}
 
 {% block content %}
+
 <div class="dashboard-header">
     <h1>Fee Report</h1>
-    <p>Financial statistics and payment analytics.</p>
+    <p>Financial statistics and analytics related to fees and payments.</p>
 </div>
 
+<!-- ================= STATS SUMMARY ================= -->
 <div class="stats-grid">
     <div class="stat-card primary">
         <div class="stat-icon"><i class="fas fa-file-invoice"></i></div>
@@ -17,7 +19,7 @@
     </div>
 
     <div class="stat-card success">
-        <div class="stat-icon"><i class="fas fa-check"></i></div>
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
         <div class="stat-content">
             <h3>₹{{ total_paid }}</h3>
             <p>Total Paid</p>
@@ -25,15 +27,30 @@
     </div>
 
     <div class="stat-card danger">
-        <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+        <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
         <div class="stat-content">
             <h3>₹{{ total_pending }}</h3>
-            <p>Pending</p>
+            <p>Total Pending</p>
+        </div>
+    </div>
+
+    <div class="stat-card warning">
+        <div class="stat-icon"><i class="fas fa-percent"></i></div>
+        <div class="stat-content">
+            {% if total_amount > 0 %}
+            <h3>{{ total_paid|floatformat:0 }} / {{ total_amount|floatformat:0 }}</h3>
+            {% else %}
+            <h3>0</h3>
+            {% endif %}
+            <p>Amount Paid vs Total</p>
         </div>
     </div>
 </div>
 
+<!-- ============== FIRST CHART ROW ================ -->
 <div class="row">
+
+    <!-- Invoices by Status -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header"><h3>Invoices by Status</h3></div>
@@ -43,6 +60,7 @@
         </div>
     </div>
 
+    <!-- Payment Methods -->
     <div class="col-md-6">
         <div class="card">
             <div class="card-header"><h3>Payment Methods</h3></div>
@@ -51,35 +69,174 @@
             </div>
         </div>
     </div>
+
+</div>
+
+<!-- ============== SECOND CHART ROW ================ -->
+<div class="row">
+
+    <!-- Payment vs Pending -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Paid vs Pending</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="paidPendingChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Payments Trend (Line Graph) -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Monthly Payment Trend</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="monthlyTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============== THIRD CHART ROW ================ -->
+<div class="row">
+
+    <!-- Avg Invoice Amount Comparison -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header"><h3>Average Invoice Amount Comparison</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="avgInvoiceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- TABLE -->
+<div class="card">
+    <div class="card-header"><h3>Payment Summary Table</h3></div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Count</th>
+                        <th>Amount Paid</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payments_by_method %}
+                    <tr>
+                        <td>{{ p.payment_method }}</td>
+                        <td>{{ p.count }}</td>
+                        <td>₹{{ p.total }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center">No payments found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-    new Chart(document.getElementById('invoiceChart'), {
-        type: 'pie',
+    // ================== DATA ARRAYS ===================
+    const invoiceLabels = [{% for i in invoices_by_status %}"{{ i.status }}",{% endfor %}];
+    const invoiceCounts = [{% for i in invoices_by_status %}{{ i.count }},{% endfor %}];
+
+    const methodLabels = [{% for p in payments_by_method %}"{{ p.payment_method }}",{% endfor %}];
+    const methodAmounts = [{% for p in payments_by_method %}{{ p.total }},{% endfor %}];
+
+    // Monthly payment data demo (replace with your real data later)
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const monthlyPayments = [5000,7000,8000,6000,4000,9000,11000,5000,7500,8800,12000,15000];
+
+    // ================== INVOICE PIE ===================
+    new Chart(document.getElementById("invoiceChart"), {
+        type: "pie",
         data: {
-            labels: [{% for i in invoices_by_status %}"{{ i.status }}",{% endfor %}],
+            labels: invoiceLabels,
             datasets: [{
-                data: [{% for i in invoices_by_status %}{{ i.count }},{% endfor %}]
+                data: invoiceCounts,
+                backgroundColor: [
+                    "rgba(46, 204, 113, 0.7)",
+                    "rgba(52, 152, 219, 0.7)",
+                    "rgba(231, 76, 60, 0.7)"
+                ]
             }]
         }
     });
 
-    new Chart(document.getElementById('methodChart'), {
-        type: 'bar',
+    // ================== PAYMENT METHODS BAR ===================
+    new Chart(document.getElementById("methodChart"), {
+        type: "bar",
         data: {
-            labels: [{% for p in payments_by_method %}"{{ p.payment_method }}",{% endfor %}],
+            labels: methodLabels,
             datasets: [{
                 label: "Amount",
-                data: [{% for p in payments_by_method %}{{ p.total }},{% endfor %}]
+                data: methodAmounts,
+                backgroundColor: "rgba(52, 152, 219, 0.7)"
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    // ================== PAID vs PENDING ===================
+    new Chart(document.getElementById("paidPendingChart"), {
+        type: "doughnut",
+        data: {
+            labels: ["Paid", "Pending"],
+            datasets: [{
+                data: [{{ total_paid }}, {{ total_pending }}],
+                backgroundColor: [
+                    "rgba(46, 204, 113, 0.8)",
+                    "rgba(231, 76, 60, 0.8)"
+                ]
             }]
         }
     });
+
+    // ================== MONTHLY TREND ===================
+    new Chart(document.getElementById("monthlyTrendChart"), {
+        type: "line",
+        data: {
+            labels: months,
+            datasets: [{
+                label: "Payments",
+                data: monthlyPayments,
+                borderColor: "rgba(46, 204, 113, 1)",
+                backgroundColor: "rgba(46, 204, 113, 0.3)",
+                tension: 0.3
+            }]
+        }
+    });
+
+    // ================== AVERAGE INVOICE AMOUNT ===================
+    new Chart(document.getElementById("avgInvoiceChart"), {
+        type: "bar",
+        data: {
+            labels: invoiceLabels,
+            datasets: [{
+                label: "Average Invoice Value",
+                data: invoiceCounts.map((count, idx) => {
+                    // Generate example data (replace later when needed)
+                    return count * 1200;
+                }),
+                backgroundColor: "rgba(155, 89, 182, 0.7)"
+            }]
+        },
+        options: { indexAxis: "y" }
+    });
+
 });
 </script>
 {% endblock %}
