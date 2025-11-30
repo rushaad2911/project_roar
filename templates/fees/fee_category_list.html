@@ -35,7 +35,7 @@
                     <tr>
                         <td>{{ category.name }}</td>
                         <td>{{ category.description|truncatechars:50|default:"-" }}</td>
-                        <td>${{ category.amount|floatformat:2 }}</td>
+                        <td>₹{{ category.amount|floatformat:2 }}</td>
                         <td>
                             {% if category.is_recurring %}
                             <span class="badge badge-success">Yes</span>

@@ -45,7 +45,7 @@
             <i class="fas fa-money-bill-wave"></i>
         </div>
         <div class="stat-content">
-            <h3>${{ total_pending|floatformat:2 }}</h3>
+            <h3>₹{{ total_pending|floatformat:2 }}</h3>
             <p>Pending Fees</p>
         </div>
     </div>
@@ -158,15 +158,15 @@
                 <div class="fee-stats">
                     <div class="fee-stat">
                         <h4>Total Fees</h4>
-                        <p>${{ total_fees|floatformat:2 }}</p>
+                        <p>₹{{ total_fees|floatformat:2 }}</p>
                     </div>
                     <div class="fee-stat">
                         <h4>Paid</h4>
-                        <p>${{ total_paid|floatformat:2 }}</p>
+                        <p>₹{{ total_paid|floatformat:2 }}</p>
                     </div>
                     <div class="fee-stat">
                         <h4>Pending</h4>
-                        <p>${{ total_pending|floatformat:2 }}</p>
+                        <p>₹{{ total_pending|floatformat:2 }}</p>
                     </div>
                 </div>
                 <div class="progress-container">

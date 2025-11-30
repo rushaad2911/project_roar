@@ -64,9 +64,9 @@
                         <td>{{ invoice.student.user.get_full_name }}</td>
                         <td>{{ invoice.issue_date }}</td>
                         <td>{{ invoice.due_date }}</td>
-                        <td>${{ invoice.total_amount|floatformat:2 }}</td>
-                        <td>${{ invoice.paid_amount|floatformat:2 }}</td>
-                        <td>${{ invoice.balance|floatformat:2 }}</td>
+                        <td>₹{{ invoice.total_amount|floatformat:2 }}</td>
+                        <td>₹{{ invoice.paid_amount|floatformat:2 }}</td>
+                        <td>₹{{ invoice.balance|floatformat:2 }}</td>
                         <td>
                             <span class="badge {% if invoice.status == 'paid' %}badge-success{% elif invoice.status == 'pending' %}badge-warning{% elif invoice.status == 'overdue' %}badge-danger{% else %}badge-secondary{% endif %}">
                                 {{ invoice.get_status_display }}

@@ -35,9 +35,9 @@
                         <td>{{ invoice.invoice_number }}</td>
                         <td>{{ invoice.issue_date }}</td>
                         <td>{{ invoice.due_date }}</td>
-                        <td>${{ invoice.total_amount|floatformat:2 }}</td>
-                        <td>${{ invoice.paid_amount|floatformat:2 }}</td>
-                        <td>${{ invoice.balance|floatformat:2 }}</td>
+                        <td>₹{{ invoice.total_amount|floatformat:2 }}</td>
+                        <td>₹{{ invoice.paid_amount|floatformat:2 }}</td>
+                        <td>₹{{ invoice.balance|floatformat:2 }}</td>
                         <td>
                             <span class="badge {% if invoice.status == 'paid' %}badge-success{% elif invoice.status == 'pending' %}badge-warning{% elif invoice.status == 'overdue' %}badge-danger{% else %}badge-secondary{% endif %}">
                                 {{ invoice.get_status_display }}
@@ -109,15 +109,15 @@
                         {% if forloop.last %}
                         <div class="summary-item">
                             <div class="summary-label">Total Fees</div>
-                            <div class="summary-value">${{ total_fees|floatformat:2 }}</div>
+                            <div class="summary-value">$]₹{{ total_fees|floatformat:2 }}</div>
                         </div>
                         <div class="summary-item">
                             <div class="summary-label">Total Paid</div>
-                            <div class="summary-value">${{ total_paid|floatformat:2 }}</div>
+                            <div class="summary-value">₹{{ total_paid|floatformat:2 }}</div>
                         </div>
                         <div class="summary-item">
                             <div class="summary-label">Balance Due</div>
-                            <div class="summary-value">${{ total_fees|sub:total_paid|floatformat:2 }}</div>
+                            <div class="summary-value">₹{ total_fees|sub:total_paid|floatformat:2 }}</div>
                         </div>
                         {% endif %}
                     {% endwith %}

@@ -1,0 +1,27 @@
+services:
+  roar_server:
+    build: .
+    container_name: roar_server
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    command: gunicorn project_roar.wsgi:application --bind 0.0.0.0:8000
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - roar_server
+
+volumes:
+  static_volume:
+  media_volume:

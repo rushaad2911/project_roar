@@ -12,7 +12,7 @@ class FeeCategory(models.Model):
     is_recurring = models.BooleanField(default=True, help_text='Whether this fee is charged regularly')
 
     def __str__(self):
-        return f"{self.name} (${self.amount})"
+        return f"{self.name} (₹{self.amount})"
 
     class Meta:
         verbose_name_plural = 'Fee Categories'
@@ -61,7 +61,7 @@ class FeeInvoiceItem(models.Model):
     description = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.category.name} - ${self.amount}"
+        return f"{self.category.name} - ₹{self.amount}"
 
 class Payment(models.Model):
     """
@@ -84,7 +84,7 @@ class Payment(models.Model):
     notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Payment of ${self.amount} for {self.invoice}"
+        return f"Payment of ₹{self.amount} for {self.invoice}"
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

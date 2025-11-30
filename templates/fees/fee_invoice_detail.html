@@ -72,7 +72,7 @@
                         <div class="item-name">{{ item.category.name }}</div>
                         <div class="item-description">{{ item.description|default:item.category.description }}</div>
                     </td>
-                    <td class="amount">${{ item.amount|floatformat:2 }}</td>
+                    <td class="amount">₹{{ item.amount|floatformat:2 }}</td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -83,15 +83,15 @@
             <tfoot>
                 <tr>
                     <td colspan="2" class="text-right">Total</td>
-                    <td class="amount">${{ invoice.total_amount|floatformat:2 }}</td>
+                    <td class="amount">₹{{ invoice.total_amount|floatformat:2 }}</td>
                 </tr>
                 <tr>
                     <td colspan="2" class="text-right">Paid</td>
-                    <td class="amount">${{ invoice.paid_amount|floatformat:2 }}</td>
+                    <td class="amount">₹{{ invoice.paid_amount|floatformat:2 }}</td>
                 </tr>
                 <tr class="balance-row">
                     <td colspan="2" class="text-right">Balance</td>
-                    <td class="amount">${{ invoice.balance|floatformat:2 }}</td>
+                    <td class="amount">₹{{ invoice.balance|floatformat:2 }}</td>
                 </tr>
             </tfoot>
         </table>
@@ -117,7 +117,7 @@
                     <td>{{ payment.payment_date }}</td>
                     <td>{{ payment.get_payment_method_display }}</td>
                     <td>{{ payment.transaction_id|default:"-" }}</td>
-                    <td class="amount">${{ payment.amount|floatformat:2 }}</td>
+                    <td class="amount">₹{{ payment.amount|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

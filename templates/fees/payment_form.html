@@ -59,7 +59,7 @@
                         </div>
                         {% endif %}
                         {% if invoice %}
-                        <small class="form-text text-muted">Balance due: ${{ invoice.balance|floatformat:2 }}</small>
+                        <small class="form-text text-muted">Balance due: ₹{{ invoice.balance|floatformat:2 }}</small>
                         {% endif %}
                     </div>
                     
@@ -145,15 +145,15 @@
                     </div>
                     <div class="summary-item">
                         <div class="summary-label">Total Amount</div>
-                        <div class="summary-value">${{ invoice.total_amount|floatformat:2 }}</div>
+                        <div class="summary-value">₹{{ invoice.total_amount|floatformat:2 }}</div>
                     </div>
                     <div class="summary-item">
                         <div class="summary-label">Paid Amount</div>
-                        <div class="summary-value">${{ invoice.paid_amount|floatformat:2 }}</div>
+                        <div class="summary-value">₹{{ invoice.paid_amount|floatformat:2 }}</div>
                     </div>
                     <div class="summary-item">
                         <div class="summary-label">Balance Due</div>
-                        <div class="summary-value">${{ invoice.balance|floatformat:2 }}</div>
+                        <div class="summary-value">₹{{ invoice.balance|floatformat:2 }}</div>
                     </div>
                     <div class="summary-item">
                         <div class="summary-label">Status</div>
