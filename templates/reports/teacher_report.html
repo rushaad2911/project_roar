@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Teacher Report - ROAR{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Teacher Report</h1>
+    <p>Statistics about teachers and teaching distribution.</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="stat-content">
+            <h3>{{ total_teachers }}</h3>
+            <p>Total Teachers</p>
+        </div>
+    </div>
+
+    <div class="stat-card warning">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-content">
+            <h3>{{ avg_experience|floatformat:1 }}</h3>
+            <p>Avg Experience (Years)</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Gender Distribution</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="teacherGenderChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Courses Per Teacher</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="courseCountChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const genderLabels = [{% for g in teachers_by_gender %}"{{ g.gender }}",{% endfor %}];
+    const genderCounts = [{% for g in teachers_by_gender %}{{ g.count }},{% endfor %}];
+
+    new Chart(document.getElementById('teacherGenderChart'), {
+        type: 'doughnut',
+        data: { labels: genderLabels, datasets: [{ data: genderCounts }] }
+    });
+
+    new Chart(document.getElementById('courseCountChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for t in teachers_with_courses %}"{{ t.user.get_full_name }}",{% endfor %}],
+            datasets: [{
+                label: "Courses",
+                data: [{% for t in teachers_with_courses %}{{ t.course_count }},{% endfor %}]
+            }]
+        }
+    });
+});
+</script>
+{% endblock %}

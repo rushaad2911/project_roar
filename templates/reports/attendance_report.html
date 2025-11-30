@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Attendance Report - ROAR{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Attendance Report</h1>
+    <p>Attendance statistics for all courses.</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
+        <div class="stat-content">
+            <h3>{{ total_records }}</h3>
+            <p>Total Attendance Records</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Status Distribution</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Present % by Course</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="courseAttendanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // Status counts
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: [{% for s in attendance_by_status %}"{{ s.status }}",{% endfor %}],
+            datasets: [{
+                data: [{% for s in attendance_by_status %}{{ s.count }},{% endfor %}]
+            }]
+        }
+    });
+
+    // Course attendance %
+    new Chart(document.getElementById('courseAttendanceChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for c, s in course_attendance.items %}"{{ c.name }}",{% endfor %}],
+            datasets: [{
+                label: "Present %",
+                data: [{% for c, s in course_attendance.items %}{{ s.present_percentage|floatformat:1 }},{% endfor %}]
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true, max: 100 }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

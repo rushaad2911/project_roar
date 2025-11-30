@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Fee Report - ROAR{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Fee Report</h1>
+    <p>Financial statistics and payment analytics.</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-file-invoice"></i></div>
+        <div class="stat-content">
+            <h3>{{ total_invoices }}</h3>
+            <p>Total Invoices</p>
+        </div>
+    </div>
+
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-check"></i></div>
+        <div class="stat-content">
+            <h3>₹{{ total_paid }}</h3>
+            <p>Total Paid</p>
+        </div>
+    </div>
+
+    <div class="stat-card danger">
+        <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+        <div class="stat-content">
+            <h3>₹{{ total_pending }}</h3>
+            <p>Pending</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Invoices by Status</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="invoiceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Payment Methods</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="methodChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    new Chart(document.getElementById('invoiceChart'), {
+        type: 'pie',
+        data: {
+            labels: [{% for i in invoices_by_status %}"{{ i.status }}",{% endfor %}],
+            datasets: [{
+                data: [{% for i in invoices_by_status %}{{ i.count }},{% endfor %}]
+            }]
+        }
+    });
+
+    new Chart(document.getElementById('methodChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for p in payments_by_method %}"{{ p.payment_method }}",{% endfor %}],
+            datasets: [{
+                label: "Amount",
+                data: [{% for p in payments_by_method %}{{ p.total }},{% endfor %}]
+            }]
+        }
+    });
+});
+</script>
+{% endblock %}

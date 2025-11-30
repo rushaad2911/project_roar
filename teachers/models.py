@@ -19,3 +19,17 @@ class Teacher(models.Model):
 
     class Meta:
         ordering = ['user__first_name', 'user__last_name']
+        
+        
+class TeacherReview(models.Model):
+    """
+    Model for storing reviews given to teachers.
+    """
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='reviews')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_reviews')
+    rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)])
+    comment = models.TextField(null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review for {self.teacher} by {self.student}"

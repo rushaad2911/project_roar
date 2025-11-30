@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Reports Dashboard - ROAR{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Reports Dashboard</h1>
+    <p>View analytics and statistics for your institute.</p>
+</div>
+
+<div class="stats-grid">
+    <a href="{% url 'student_report' %}" class="stat-card link-card animate" data-animation="slide-in-up">
+        <div class="stat-icon primary"><i class="fas fa-user-graduate"></i></div>
+        <div class="stat-content">
+            <h3>Students</h3>
+            <p>Student Statistics Report</p>
+        </div>
+    </a>
+
+    <a href="{% url 'teacher_report' %}" class="stat-card link-card animate" data-animation="slide-in-up">
+        <div class="stat-icon success"><i class="fas fa-chalkboard-teacher"></i></div>
+        <div class="stat-content">
+            <h3>Teachers</h3>
+            <p>Teacher Statistics Report</p>
+        </div>
+    </a>
+
+    <a href="{% url 'course_report' %}" class="stat-card link-card animate" data-animation="slide-in-up">
+        <div class="stat-icon warning"><i class="fas fa-book"></i></div>
+        <div class="stat-content">
+            <h3>Courses</h3>
+            <p>Course Overview Report</p>
+        </div>
+    </a>
+
+    <a href="{% url 'attendance_report' %}" class="stat-card link-card animate" data-animation="slide-in-up">
+        <div class="stat-icon info"><i class="fas fa-clipboard-check"></i></div>
+        <div class="stat-content">
+            <h3>Attendance</h3>
+            <p>Attendance Analytics</p>
+        </div>
+    </a>
+
+    <a href="{% url 'fee_report' %}" class="stat-card link-card animate" data-animation="slide-in-up">
+        <div class="stat-icon danger"><i class="fas fa-money-bill-wave"></i></div>
+        <div class="stat-content">
+            <h3>Fees</h3>
+            <p>Financial & Payments Report</p>
+        </div>
+    </a>
+</div>
+
+<style>
+.link-card { text-decoration: none; color: inherit; }
+</style>
+{% endblock %}

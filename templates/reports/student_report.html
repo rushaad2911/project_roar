@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Student Report - ROAR{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Student Report</h1>
+    <p>Overview of student demographics and enrollment statistics.</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-content">
+            <h3>{{ total_students }}</h3>
+            <p>Total Students</p>
+        </div>
+    </div>
+
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-book-reader"></i></div>
+        <div class="stat-content">
+            <h3>{{ active_enrollments }}</h3>
+            <p>Active Enrollments</p>
+        </div>
+    </div>
+
+    <div class="stat-card info">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-content">
+            <h3>{{ completed_enrollments }}</h3>
+            <p>Completed</p>
+        </div>
+    </div>
+
+    <div class="stat-card danger">
+        <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+        <div class="stat-content">
+            <h3>{{ dropped_enrollments }}</h3>
+            <p>Dropped</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Student Gender Distribution</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="genderChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Enrollments Summary</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="enrollmentChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const genderLabels = [{% for g in students_by_gender %}"{{ g.gender }}",{% endfor %}];
+    const genderCounts  = [{% for g in students_by_gender %}{{ g.count }},{% endfor %}];
+
+    new Chart(document.getElementById('genderChart'), {
+        type: 'doughnut',
+        data: {
+            labels: genderLabels,
+            datasets: [{ data: genderCounts }]
+        }
+    });
+
+    new Chart(document.getElementById('enrollmentChart'), {
+        type: 'bar',
+        data: {
+            labels: ["Active", "Completed", "Dropped"],
+            datasets: [{
+                data: [
+                    {{ active_enrollments }},
+                    {{ completed_enrollments }},
+                    {{ dropped_enrollments }}
+                ]
+            }]
+        },
+        options: { responsive: true }
+    });
+});
+</script>
+{% endblock %}

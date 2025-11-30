@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Course Report - ROAR{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Course Report</h1>
+    <p>Detailed analytics on course enrollments and student engagement.</p>
+</div>
+
+<!-- ==================== STATS SUMMARY ==================== -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-book"></i></div>
+        <div class="stat-content">
+            <h3>{{ total_courses }}</h3>
+            <p>Total Courses</p>
+        </div>
+    </div>
+
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+        <div class="stat-content">
+            <h3>{{ courses_with_students|length }}</h3>
+            <p>Courses With Students</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CHART ROW ==================== -->
+<div class="row">
+
+    <!-- Doughnut: Total Students Per Course -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Total Students Per Course</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="studentCountChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bar: Enrollment Status Distribution -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Active / Completed / Dropped</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="statusDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ==================== CHART ROW 2 ==================== -->
+<div class="row">
+
+    <!-- Horizontal Bar Chart: Completion vs Drop Trend -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Course Completion vs Drop-Off Trend</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="completionTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Line Chart: Active Percentage Trend -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h3>Engagement Trend (Active %)</h3></div>
+            <div class="card-body chart-body">
+                <canvas id="engagementChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ==================== TABLE ==================== -->
+<div class="card">
+    <div class="card-header"><h3>Courses Summary</h3></div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Active</th>
+                        <th>Completed</th>
+                        <th>Dropped</th>
+                        <th>Total</th>
+                        <th>Active %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c, stats in course_enrollments.items %}
+                    <tr data-active="{{ stats.active }}" data-total="{{ stats.total }}">
+                        <td>{{ c.name }}</td>
+                        <td>{{ stats.active }}</td>
+                        <td>{{ stats.completed }}</td>
+                        <td>{{ stats.dropped }}</td>
+                        <td>{{ stats.total }}</td>
+                        <td class="active-percent-cell">-</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No course data available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    // Prepare labels
+    const courseLabels = [{% for c, s in course_enrollments.items %}"{{ c.name }}",{% endfor %}];
+
+    // Prepare data arrays
+    const activeData = [{% for c, s in course_enrollments.items %}{{ s.active }},{% endfor %}];
+    const completedData = [{% for c, s in course_enrollments.items %}{{ s.completed }},{% endfor %}];
+    const droppedData = [{% for c, s in course_enrollments.items %}{{ s.dropped }},{% endfor %}];
+    const totalData = [{% for c, s in course_enrollments.items %}{{ s.total }},{% endfor %}];
+
+    // ===================== Doughnut Chart =====================
+    const studentCountCtx = document.getElementById('studentCountChart');
+    if (studentCountCtx) {
+        new Chart(studentCountCtx, {
+            type: 'doughnut',
+            data: {
+                labels: courseLabels,
+                datasets: [{
+                    data: totalData,
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(46, 204, 113, 0.7)',
+                        'rgba(241, 196, 15, 0.7)',
+                        'rgba(231, 76, 60, 0.7)',
+                        'rgba(155, 89, 182, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    // ===================== Bar Chart: Active / Completed / Dropped =====================
+    const statusCtx = document.getElementById('statusDistributionChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'bar',
+            data: {
+                labels: courseLabels,
+                datasets: [
+                    { label: "Active", data: activeData, backgroundColor: 'rgba(46, 204, 113, 0.7)' },
+                    { label: "Completed", data: completedData, backgroundColor: 'rgba(52, 152, 219, 0.7)' },
+                    { label: "Dropped", data: droppedData, backgroundColor: 'rgba(231, 76, 60, 0.7)' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // ===================== Horizontal Trend Chart =====================
+    const completionCtx = document.getElementById('completionTrendChart');
+    if (completionCtx) {
+        new Chart(completionCtx, {
+            type: 'bar',
+            data: {
+                labels: courseLabels,
+                datasets: [
+                    { label: "Completed", data: completedData, backgroundColor: 'rgba(52,152,219,0.7)' },
+                    { label: "Dropped", data: droppedData, backgroundColor: 'rgba(231,76,60,0.7)' }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // ===================== Line Chart: Active % =====================
+    const engagementCtx = document.getElementById('engagementChart');
+    if (engagementCtx) {
+        const activePercentageData = activeData.map((val, idx) => {
+            const total = totalData[idx] || 0;
+            return total ? (val / total * 100) : 0;
+        });
+
+        new Chart(engagementCtx, {
+            type: 'line',
+            data: {
+                labels: courseLabels,
+                datasets: [{
+                    label: "Active Percentage",
+                    data: activePercentageData,
+                    fill: false,
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    backgroundColor: 'rgba(46, 204, 113, 0.5)',
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100 }
+                }
+            }
+        });
+    }
+
+    // ===================== Fill Active % in Table =====================
+    document.querySelectorAll('tr[data-active]').forEach(row => {
+        const active = parseInt(row.dataset.active || "0", 10);
+        const total = parseInt(row.dataset.total || "0", 10);
+        const cell = row.querySelector('.active-percent-cell');
+        if (!cell) return;
+
+        if (total > 0) {
+            const percent = (active / total * 100).toFixed(1);
+            cell.textContent = percent + "%";
+        } else {
+            cell.textContent = "0.0%";
+        }
+    });
+
+});
+</script>
+
+{% endblock %}

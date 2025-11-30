@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Access Denied{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header danger">
+        <h3><i class="fas fa-ban"></i> Access Denied</h3>
+    </div>
+    <div class="card-body">
+        <p>You do not have permission to view this report.</p>
+        <a href="/" class="btn btn-primary">Go Back</a>
+    </div>
+</div>
+{% endblock %}
