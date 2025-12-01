@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'dashboard',
     'reports',
     'counselling',
+    'department',
 ]
 
 MIDDLEWARE = [

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from department.models import Department
 
 class User(AbstractUser):
     """
@@ -16,7 +17,7 @@ class User(AbstractUser):
     profile_pic = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     address = models.TextField(null=True, blank=True)
     mobile = models.CharField(max_length=15, null=True, blank=True)
-    
+    department = models.ForeignKey(Department, on_delete=models.CASCADE,default=None ,null=True, blank=True)
     def __str__(self):
         return f"{self.username} ({self.get_user_type_display()})"
     
