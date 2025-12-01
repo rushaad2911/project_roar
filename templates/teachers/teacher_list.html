@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Teachers{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-header">
+    <h1>Teachers</h1>
+    <p>Browse, filter, and manage all teachers in the institute.</p>
+</div>
+
+<!-- ======================== FILTER BAR ======================== -->
+<div class="filter-bar">
+    <form method="get" class="filter-form">
+
+        <!-- Search -->
+        <input type="text"
+               name="q"
+               value="{{ search_query }}"
+               class="filter-input"
+               placeholder="Search name, email, teacher ID...">
+
+        <!-- Department Dropdown -->
+        <select name="department" class="filter-select">
+            <option value="all" {% if selected_department == "all" %}selected{% endif %}>
+                All Departments
+            </option>
+
+            {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if selected_department|add:"" == dept.id|add:"" %}selected{% endif %}>
+                {{ dept.name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <button class="filter-btn" type="submit">
+            <i class="fas fa-filter"></i> Filter
+        </button>
+    </form>
+</div>
+
+<!-- ======================== GROUPED TEACHER LIST ======================== -->
+{% for dept, teachers in grouped_teachers.items %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h3>{{ dept }}</h3>
+    </div>
+
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Teacher</th>
+                        <th>Email</th>
+                        <th>Teacher ID</th>
+                        <th>Qualification</th>
+                        <th>Experience</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for teacher in teachers %}
+                    <tr>
+                        <td>
+                            {{ teacher.user.first_name }} {{ teacher.user.last_name }}
+                        </td>
+
+                        <td>{{ teacher.user.email }}</td>
+
+                        <td>{{ teacher.teacher_id }}</td>
+
+                        <td>{{ teacher.qualification|default:"-" }}</td>
+
+                        <td>{{ teacher.experience }} years</td>
+
+                        <td class="table-actions">
+                            <a href="{% url 'teacher_detail' teacher.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+
+                            <a href="{% url 'teacher_update' teacher.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+
+                            <a href="{% url 'teacher_delete' teacher.id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+</div>
+{% empty %}
+<p class="text-center mt-5">No teachers found.</p>
+{% endfor %}
+
+{% endblock %}

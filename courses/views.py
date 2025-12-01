@@ -11,11 +11,48 @@ from students.models import Student
 from students.views import AdminRequiredMixin
 
 class CourseListView(LoginRequiredMixin, ListView):
-    """View to list all courses."""
     model = Course
     template_name = 'courses/course_list.html'
     context_object_name = 'courses'
-    paginate_by = 10
+    paginate_by = None  # No pagination for grouped view
+
+    def get_queryset(self):
+        qs = Course.objects.select_related("department").prefetch_related("teachers", "enrollments")
+
+        # Department filter
+        dept = self.request.GET.get("department", "all")
+        if dept != "all":
+            qs = qs.filter(department_id=dept)
+
+        # Search filter
+        search = self.request.GET.get("search", "")
+        if search:
+            qs = qs.filter(
+                Q(name__icontains=search) |
+                Q(code__icontains=search)
+            )
+
+        return qs.order_by("department__name", "name")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        courses = context["courses"]
+        from department.models import Department
+
+        # group courses by department
+        grouped = {}
+        for course in courses:
+            dept = course.department.name if course.department else "Others"
+            grouped.setdefault(dept, []).append(course)
+
+        context["grouped_courses"] = grouped
+        context["departments"] = Department.objects.all()
+        context["selected_department"] = self.request.GET.get("department", "all")
+        context["search_query"] = self.request.GET.get("search", "")
+
+        return context
+
 
 class CourseDetailView(LoginRequiredMixin, DetailView):
     """View to display course details."""

@@ -1,0 +1,16 @@
+Write-Host "Deleting DB..."
+Remove-Item db.sqlite3 -Force -ErrorAction SilentlyContinue
+
+Write-Host "Removing migrations..."
+Get-ChildItem -Recurse -Filter migrations | ForEach-Object {
+    Get-ChildItem $_.FullName -Filter *.py -Exclude __init__.py | Remove-Item -Force
+}
+
+Write-Host "Running makemigrations..."
+python manage.py makemigrations
+
+Write-Host "Running migrate..."
+python manage.py migrate
+
+Write-Host "Running dummy_data..."
+python manage.py dummy_data

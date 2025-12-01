@@ -29,7 +29,7 @@ class Command(BaseCommand):
         self.create_admin()
         self.create_teachers()
         self.create_students()
-        self.create_courses()
+        self.create_courses()    # teachers assigned inside this
         self.create_schedules()
         self.create_enrollments()
         self.create_attendance()
@@ -44,10 +44,8 @@ class Command(BaseCommand):
     def fast_delete_all(self):
         cursor = connection.cursor()
         cursor.execute("PRAGMA foreign_keys = OFF;")
-
         for table in connection.introspection.table_names():
             cursor.execute(f'DELETE FROM "{table}";')
-
         cursor.execute("PRAGMA foreign_keys = ON;")
 
     # ------------------------------------------------------------
@@ -55,7 +53,6 @@ class Command(BaseCommand):
     # ------------------------------------------------------------
     def load_departments(self):
         required = ["Civil", "IT", "Mechanical", "Electronics", "Computer Science"]
-
         for name in required:
             Department.objects.get_or_create(name=name)
 
@@ -84,10 +81,9 @@ class Command(BaseCommand):
     def create_teachers(self):
         teacher_users = []
 
-        # create teacher user objects
         for dept in self.departments:
             for i in range(5):
-                user = User(
+                u = User(
                     username=f"teacher_{dept.name[:3]}_{i}",
                     user_type="teacher",
                     department=dept,
@@ -95,22 +91,19 @@ class Command(BaseCommand):
                     last_name=fake.last_name(),
                     mobile=fake.phone_number(),
                 )
-                user.set_password("test1234")
-                teacher_users.append(user)
+                u.set_password("test1234")
+                teacher_users.append(u)
 
-        # bulk insert users
         User.objects.bulk_create(teacher_users)
+        created_users = list(User.objects.filter(user_type="teacher"))
 
-        # fetch saved users
-        created_user_list = list(User.objects.filter(user_type="teacher"))
         teacher_objs = []
-
         idx = 0
         for dept in self.departments:
             for i in range(5):
                 teacher_objs.append(
                     Teacher(
-                        user=created_user_list[idx],
+                        user=created_users[idx],
                         teacher_id=f"TCHR_{dept.id}_{i+1:03d}",
                         gender=random.choice(["male", "female"]),
                         qualification=random.choice(["M.Sc", "M.Tech", "PhD"]),
@@ -130,7 +123,7 @@ class Command(BaseCommand):
 
         for dept in self.departments:
             for i in range(60):
-                user = User(
+                u = User(
                     username=f"student_{dept.name[:3]}_{i}",
                     user_type="student",
                     department=dept,
@@ -138,21 +131,21 @@ class Command(BaseCommand):
                     last_name=fake.last_name(),
                     mobile=fake.phone_number(),
                 )
-                user.set_password("test1234")
-                student_users.append(user)
+                u.set_password("test1234")
+                student_users.append(u)
 
         User.objects.bulk_create(student_users)
 
-        created_students_users = list(User.objects.filter(user_type="student"))
+        created_users = list(User.objects.filter(user_type="student"))
         student_objs = []
 
-        for idx, user in enumerate(created_students_users):
-            dept = user.department
+        for idx, user in enumerate(created_users):
+            d = user.department
             local_id = idx % 60
             student_objs.append(
                 Student(
                     user=user,
-                    student_id=f"STD_{dept.id}_{local_id+1:03d}",
+                    student_id=f"STD_{d.id}_{local_id+1:03d}",
                     gender=random.choice(["male", "female"]),
                     parent_name=fake.name(),
                     parent_mobile=fake.phone_number(),
@@ -163,35 +156,60 @@ class Command(BaseCommand):
         self.students = list(Student.objects.all())
 
     # ------------------------------------------------------------
-    # COURSES
+    # COURSES PER DEPARTMENT (5 each)
     # ------------------------------------------------------------
     def create_courses(self):
-        course_list = [
-            ("Mathematics I", "MATH101"),
-            ("Physics I", "PHY101"),
-            ("Computer Science Basics", "CS101"),
-            ("Chemistry Basics", "CHEM101"),
-            ("English Communication", "ENG101"),
-        ]
+        dept_course_map = {
+            "Computer Science": [
+                "Data Structures", "Algorithms", "Operating Systems",
+                "DBMS", "Computer Networks"
+            ],
+            "IT": [
+                "Web Development", "Cloud Computing", "Cybersecurity",
+                "Software Engineering", "Mobile App Development"
+            ],
+            "Mechanical": [
+                "Thermodynamics", "Fluid Mechanics", "Machine Design",
+                "IC Engines", "Manufacturing Processes"
+            ],
+            "Civil": [
+                "Structural Engineering", "Surveying", "Construction Materials",
+                "Hydraulics", "Transportation Engineering"
+            ],
+            "Electronics": [
+                "Circuit Theory", "Digital Electronics", "Microprocessors",
+                "VLSI Design", "Control Systems"
+            ],
+        }
 
         courses_to_create = []
 
-        for name, code in course_list:
-            courses_to_create.append(
-                Course(
-                    name=name,
-                    code=code,
-                    description=fake.text(),
-                    credits=random.choice([3, 4]),
+        # Create courses WITH department assigned
+        for dept in self.departments:
+            for i, subject in enumerate(dept_course_map[dept.name]):
+                code = f"{dept.name[:2].upper()}{100+i}"
+                courses_to_create.append(
+                    Course(
+                        name=subject,
+                        code=code,
+                        description=fake.text(),
+                        credits=random.choice([3, 4]),
+                        department=dept  # <- Must match teacher's dept
+                    )
                 )
-            )
 
         Course.objects.bulk_create(courses_to_create)
         self.courses = list(Course.objects.all())
 
-        # attach teacher (random)
+        # Assign teachers ONLY from same department
+        dept_teachers = {d.id: [] for d in self.departments}
+        for t in self.teachers:
+            dept_teachers[t.user.department_id].append(t)
+
         for course in self.courses:
-            course.teachers.add(random.choice(self.teachers))
+            same_dept_teachers = dept_teachers.get(course.department_id, [])
+            if same_dept_teachers:
+                course.teachers.add(random.choice(same_dept_teachers))
 
     # ------------------------------------------------------------
     # SCHEDULES
@@ -212,33 +230,31 @@ class Command(BaseCommand):
         Schedule.objects.bulk_create(schedules)
 
     # ------------------------------------------------------------
-    # FAST ENROLLMENTS
+    # STUDENT ENROLLMENTS → ONLY SAME DEPARTMENT COURSES
     # ------------------------------------------------------------
     def create_enrollments(self):
         enrollments = []
 
         for student in self.students:
-            selected = random.sample(self.courses, 3)
+            dept_courses = [c for c in self.courses if c.department_id == student.user.department_id]
+
+            selected = random.sample(dept_courses, min(3, len(dept_courses)))
+
             for course in selected:
                 enrollments.append(
-                    Enrollment(
-                        student=student,
-                        course=course,
-                        status="active",
-                    )
+                    Enrollment(student=student, course=course, status="active")
                 )
 
         Enrollment.objects.bulk_create(enrollments)
         self.enrollments = list(Enrollment.objects.all())
 
     # ------------------------------------------------------------
-    # FAST ATTENDANCE CREATION
+    # ATTENDANCE
     # ------------------------------------------------------------
     def create_attendance(self):
         attendance_records = []
-        student_attendance_rows = []
+        student_rows = []
 
-        # create attendance rows for each course for last 5 days
         for course in self.courses:
             for i in range(5):
                 d = date.today() - timedelta(days=i)
@@ -249,19 +265,19 @@ class Command(BaseCommand):
         AttendanceRecord.objects.bulk_create(attendance_records)
         attendance_records = list(AttendanceRecord.objects.all())
 
-        # create student attendance in large batches
-        for rec in attendance_records:
-            enrolled = [enr.student for enr in self.enrollments if enr.course_id == rec.course_id]
-            for student in enrolled:
-                student_attendance_rows.append(
+        for record in attendance_records:
+            enrolled = [e.student for e in self.enrollments if e.course_id == record.course_id]
+
+            for stu in enrolled:
+                student_rows.append(
                     StudentAttendance(
-                        attendance_record=rec,
-                        student=student,
+                        attendance_record=record,
+                        student=stu,
                         status=random.choice(["present", "absent", "late", "excused"]),
                     )
                 )
 
-        StudentAttendance.objects.bulk_create(student_attendance_rows)
+        StudentAttendance.objects.bulk_create(student_rows)
 
     # ------------------------------------------------------------
     # FEES
@@ -279,15 +295,16 @@ class Command(BaseCommand):
         payments = []
 
         for student in self.students:
-            invoice = FeeInvoice(
-                student=student,
-                invoice_number=str(uuid.uuid4())[:8],
-                total_amount=57000,
-                paid_amount=0,
-                due_date=date.today() + timedelta(days=30),
-                status="pending",
+            invoices.append(
+                FeeInvoice(
+                    student=student,
+                    invoice_number=str(uuid.uuid4())[:8],
+                    total_amount=57000,
+                    paid_amount=0,
+                    due_date=date.today() + timedelta(days=30),
+                    status="pending",
+                )
             )
-            invoices.append(invoice)
 
         FeeInvoice.objects.bulk_create(invoices)
         invoices = list(FeeInvoice.objects.all())
@@ -295,18 +312,14 @@ class Command(BaseCommand):
         for invoice in invoices:
             for cat in self.categories:
                 items.append(
-                    FeeInvoiceItem(
-                        invoice=invoice,
-                        category=cat,
-                        amount=cat.amount,
-                    )
+                    FeeInvoiceItem(invoice=invoice, category=cat, amount=cat.amount)
                 )
             if random.choice([True, False]):
                 payments.append(
                     Payment(
                         invoice=invoice,
                         amount=30000,
-                        payment_method="cash",
+                        payment_method="cash"
                     )
                 )
 

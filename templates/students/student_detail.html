@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% load fee_extras %}
+{% block title %}{{ student.user.first_name }} – Student Profile{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-header">
+    <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
+    <p>Department: {{ student.user.department.name }}</p>
+</div>
+
+<!-- ===================== SUMMARY STATS ===================== -->
+<div class="stats-grid">
+
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-book"></i></div>
+        <div class="stat-content">
+            <h3>{{ course_count }}</h3>
+            <p>Enrolled Courses</p>
+        </div>
+    </div>
+
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+        <div class="stat-content">
+            <h3>{{ attendance_stats.present|default:"0" }}</h3>
+            <p>Present</p>
+        </div>
+    </div>
+
+    <div class="stat-card danger">
+        <div class="stat-icon"><i class="fas fa-user-times"></i></div>
+        <div class="stat-content">
+            <h3>{{ attendance_stats.absent|default:"0" }}</h3>
+            <p>Absent</p>
+        </div>
+    </div>
+
+    <div class="stat-card warning">
+        <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+        <div class="stat-content">
+            <h3>₹{{ total_pending|floatformat:2 }}</h3>
+            <p>Pending Fees</p>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ===================== ROW 1 (COURSES + ATTENDANCE TABLE) ===================== -->
+<div class="row">
+
+    <!-- =============== COURSES LIST =============== -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Courses</h3>
+            </div>
+
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Code</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in enrollments %}
+                            <tr>
+                                <td>{{ e.course.name }}</td>
+                                <td>{{ e.course.code }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if e.status == 'active' %} badge-success 
+                                        {% elif e.status == 'completed' %} badge-info
+                                        {% else %} badge-warning
+                                        {% endif %}">
+                                        {{ e.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No enrollments</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =============== RECENT ATTENDANCE =============== -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Recent Attendance</h3>
+            </div>
+
+            <div class="card-body">
+
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Course</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for a in recent_attendance %}
+                            <tr>
+                                <td>{{ a.attendance_record.date }}</td>
+                                <td>{{ a.attendance_record.course.name }}</td>
+                                <td>
+                                    <span class="badge
+                                        {% if a.status == 'present' %} badge-success
+                                        {% elif a.status == 'absent' %} badge-danger
+                                        {% elif a.status == 'late' %} badge-warning
+                                        {% else %} badge-info
+                                        {% endif %}">
+                                        {{ a.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No attendance records</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ===================== ATTENDANCE CHART ===================== -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3>Attendance Overview</h3>
+            </div>
+
+            <div class="card-body">
+                <div style="height: 350px;">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- ===================== FEE STATUS ===================== -->
+<div class="row">
+
+    <div class="col-md-6">
+        <div class="card mt-4">
+            <div class="card-header"><h3>Fee Summary</h3></div>
+            <div class="card-body">
+
+                <div class="fee-stats">
+                    <div class="fee-stat">
+                        <h4>Total Fees</h4>
+                        <p>₹{{ total_fees|floatformat:2 }}</p>
+                    </div>
+
+                    <div class="fee-stat">
+                        <h4>Paid</h4>
+                        <p>₹{{ total_paid|floatformat:2 }}</p>
+                    </div>
+
+                    <div class="fee-stat">
+                        <h4>Pending</h4>
+                        <p>₹{{ total_pending|floatformat:2 }}</p>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Payment Progress</span>
+                        {% if total_fees > 0 %}
+                        <span>{{ total_paid|div:total_fees|mul:100|floatformat:0 }}%</span>
+                        {% else %}
+                        <span>0%</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="progress">
+                        <div class="progress-bar" 
+                             style="width: 
+                             {% if total_fees > 0 %}
+                                {{ total_paid|div:total_fees|mul:100|floatformat:0 }}
+                             {% else %}
+                                0
+                             {% endif %}%">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- QUICK ACTIONS -->
+    <div class="col-md-6">
+        <div class="card mt-4">
+            <div class="card-header"><h3>Actions</h3></div>
+
+            <div class="card-body">
+                <div class="quick-actions">
+                    <a class="btn btn-primary"><i class="fas fa-book"></i> View Courses</a>
+                    <a class="btn btn-success"><i class="fas fa-clipboard-check"></i> Full Attendance</a>
+                    <a class="btn btn-warning"><i class="fas fa-money-bill"></i> Fee Details</a>
+                    <a class="btn btn-info"><i class="fas fa-user"></i> Edit Profile</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    new Chart(document.getElementById("attendanceChart"), {
+        type: "doughnut",
+        data: {
+            labels: ["Present", "Absent", "Late", "Excused"],
+            datasets: [{
+                data: [
+                    {{ attendance_stats.present|default:"0" }},
+                    {{ attendance_stats.absent|default:"0" }},
+                    {{ attendance_stats.late|default:"0" }},
+                    {{ attendance_stats.excused|default:"0" }}
+                ],
+                backgroundColor: [
+                    "rgba(46,204,113,0.7)",
+                    "rgba(231,76,60,0.7)",
+                    "rgba(243,156,18,0.7)",
+                    "rgba(52,152,219,0.7)"
+                ]
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+});
+</script>
+{% endblock %}

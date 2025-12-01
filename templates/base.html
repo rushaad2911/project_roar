@@ -69,9 +69,11 @@
                     <li class="nav-section">
                         <span class="nav-section-title">Operations</span>
                         <ul>
+                            {% if not user.is_admin %}
                             <li><a href="{% url 'attendance_record_list' %}" class="{% if '/attendance/' in request.path %}active{% endif %}">
                                 <i class="fas fa-clipboard-check"></i> <span class="menu-text">Attendance</span>
                             </a></li>
+                            {% endif %}
                             <li><a href="{% url 'fee_invoice_list' %}" class="{% if '/fees/' in request.path %}active{% endif %}">
                                 <i class="fas fa-money-bill-wave"></i> <span class="menu-text">Fees</span>
                             </a></li>
