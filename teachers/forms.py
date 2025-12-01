@@ -1,5 +1,5 @@
 from django import forms
-from .models import Teacher
+from .models import Teacher,ResearchPublication
 from accounts.models import User
 from accounts.forms import CustomUserCreationForm
 
@@ -58,3 +58,20 @@ class TeacherForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault('class', 'form-control')
+
+
+class PublicationForm(forms.ModelForm):
+    class Meta:
+        model = ResearchPublication
+        fields = [
+            "title",
+            "abstract",
+            "publication_date",
+            "journal_name",
+            "doi_number",
+            "pdf_file"
+        ]
+        widgets = {
+            "publication_date": forms.DateInput(attrs={"type": "date"}),
+            "abstract": forms.Textarea(attrs={"rows": 4}),
+        }

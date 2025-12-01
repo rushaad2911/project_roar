@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Teacher
+from .models import Teacher, ResearchPublication
 
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
@@ -11,3 +11,5 @@ class TeacherAdmin(admin.ModelAdmin):
         return f"{obj.user.first_name} {obj.user.last_name}"
 
     get_full_name.short_description = 'Full Name'
+    
+admin.site.register(ResearchPublication)

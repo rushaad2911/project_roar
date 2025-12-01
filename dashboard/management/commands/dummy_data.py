@@ -12,6 +12,8 @@ from courses.models import Course, Schedule, Enrollment
 from attendance.models import AttendanceRecord, StudentAttendance
 from fees.models import FeeCategory, FeeInvoice, FeeInvoiceItem, Payment
 from department.models import Department
+from teachers.models import ResearchPublication
+
 
 fake = Faker()
 
@@ -29,12 +31,13 @@ class Command(BaseCommand):
         self.create_admin()
         self.create_teachers()
         self.create_students()
-        self.create_courses()    # teachers assigned inside this
+        self.create_courses()    
         self.create_schedules()
         self.create_enrollments()
         self.create_attendance()
         self.create_fee_categories()
         self.create_fee_invoices_and_payments()
+        self.create_publications()
 
         self.stdout.write(self.style.SUCCESS("🎉 FAST Dummy data created successfully!"))
 
@@ -74,6 +77,29 @@ class Command(BaseCommand):
         admin.is_superuser = True
         admin.is_staff = True
         admin.save()
+    def create_publications(self):
+        publications = []
+        for teacher in self.teachers:
+            num = random.randint(0, 5)
+
+            for i in range(num):
+                publications.append(
+                    ResearchPublication(
+                        teacher=teacher,
+                        title=fake.sentence(nb_words=6),
+                        journal_name=random.choice([
+                            "IEEE Transactions",
+                            "Springer Journal",
+                            "Elsevier Journal",
+                            "Wiley Research Letters",
+                            "Nature Scientific Reports"
+                        ]),
+                        publication_date=fake.date_between(start_date="-5y", end_date="today"),
+                        pdf_file=None  # or skip file
+                    )
+                )
+
+        ResearchPublication.objects.bulk_create(publications)
 
     # ------------------------------------------------------------
     # FAST TEACHER CREATION

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}My Publications{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>My Research Publications</h1>
+    <p>{{ request.user.get_full_name }}</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Your Publications</h3>
+        <a href="{% url 'publication_add' request.user.teacher_profile.id %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Add Publication
+</a>
+
+    </div>
+
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Journal</th>
+                    <th>Year</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pub in publications %}
+                <tr>
+                    <td>{{ pub.title }}</td>
+                    <td>{{ pub.journal_name }}</td>
+                    <td>{{ pub.publication_date|date:"Y" }}</td>
+                    <td>
+                        <a href="{% url 'publication_edit' pub.id %}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{% url 'publication_delete' pub.id %}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No publications yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
