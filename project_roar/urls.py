@@ -13,6 +13,10 @@ urlpatterns = [
     path('attendance/', include('attendance.urls')),
     path('fees/', include('fees.urls')),
     path('reports/', include('reports.urls')),
+<<<<<<< HEAD
+=======
+    path('resume-analyzer/', include('resume_analyzer.urls')),
+>>>>>>> 7c09564 (Initial commit - ROAR project with Resume Analyzer)
 ]
 
 # Serve media files in development

@@ -1,0 +1,144 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resume Analyzer</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f8f9fa; color:#212529; margin:0; padding:0; }
+    .container { max-width:800px; margin:50px auto; padding:20px; background:#fff; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+    h1 { text-align:center; color:#007bff; margin-bottom:20px; }
+    .form-group { margin-bottom:20px; }
+    label { display:block; font-weight:bold; margin-bottom:10px; }
+    textarea { width:100%; height:150px; padding:10px; border:1px solid #ced4da; border-radius:4px; resize:none; }
+    input[type="file"] { display:block; margin-top:10px; }
+    button { display:block; width:100%; padding:10px; background:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:16px; }
+    .output { margin-top:24px; padding:18px 20px; background:#e9ecef; border-radius:4px; }
+    .chip { display:inline-block; padding:3px 10px; border-radius:999px; background:#dee2e6; font-size:12px; color:#495057; margin-right:6px; margin-bottom:6px;}
+    .chip--accent { background:#d4edff; color:#0056b3; }
+    .chip--danger { background:#f8d7da; color:#842029; }
+    .chip--success { background:#d1e7dd; color:#0f5132; }
+    .helper-text { font-size:12px; color:#6c757d; }
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Resume Analyzer</h1>
+
+    <div class="form-group">
+      <label for="job">Job Description:</label>
+      <textarea id="job" placeholder="Paste the job description here..." oninput="updateCharCount()"></textarea>
+      <div class="textarea-meta" style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+        <div class="helper-text">Include responsibilities, required skills, and qualifications.</div>
+        <div class="char-count" id="job-char-count">0 characters</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="resume">Resume (PDF):</label>
+      <input type="file" id="resume" accept="application/pdf" onchange="updateFileName()">
+      <div class="helper-text" id="resume-helper">Upload a single candidate resume in PDF format.</div>
+    </div>
+
+    <button id="analyze-btn" onclick="analyzeResume()">Run Analysis</button>
+
+    <div class="output" id="output"></div>
+  </div>
+
+  <script>
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + "=")) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    function updateCharCount() {
+      const job = document.getElementById('job').value || '';
+      const counter = document.getElementById('job-char-count');
+      if (counter) counter.textContent = `${job.length} character${job.length === 1 ? '' : 's'}`;
+    }
+
+    function updateFileName() {
+      const input = document.getElementById('resume');
+      const helper = document.getElementById('resume-helper');
+      if (!input || !helper) return;
+      if (input.files && input.files[0]) helper.textContent = `Selected file: ${input.files[0].name}`;
+      else helper.textContent = 'Upload a single candidate resume in PDF format.';
+    }
+
+    async function analyzeResume() {
+      const job = document.getElementById('job').value;
+      const resumeFile = document.getElementById('resume').files[0];
+      const button = document.getElementById('analyze-btn');
+      const outputDiv = document.getElementById('output');
+
+      if (!job || !resumeFile) { alert('Please provide both the job description and resume file.'); return; }
+
+      const formData = new FormData();
+      formData.append('job', job);
+      formData.append('resume', resumeFile);
+
+      try {
+        if (button) { button.disabled = true; button.textContent = 'Analyzing...'; }
+
+        const response = await fetch("{% url 'resume_analyzer:analyze' %}", {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-CSRFToken': csrftoken }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const message = errorData.error || 'Something went wrong while analyzing the resume.';
+          throw new Error(message);
+        }
+
+        const result = await response.json();
+        const resumeSkills = result.resumeSkills || [];
+        const jobSkills = result.jobSkills || [];
+        const missingSkills = result.missingSkills || [];
+
+        const renderChips = (items, style = 'default') => {
+          if (!items.length) return '<span class="helper-text">None detected</span>';
+          let cls = 'chip';
+          if (style === 'accent') cls += ' chip--accent';
+          if (style === 'danger') cls += ' chip--danger';
+          if (style === 'success') cls += ' chip--success';
+          return items.map(s => `<span class="${cls}">${s}</span>`).join('');
+        };
+
+        const matchedCount = resumeSkills.filter(s => jobSkills.includes(s)).length;
+        const summaryText = `Matched ${matchedCount} of ${jobSkills.length} skills from the job description.`;
+
+        outputDiv.innerHTML = `
+          <h2>Analysis Results</h2>
+          <div class="result-row"><strong>Summary:</strong> <span>${summaryText}</span></div>
+          <div class="result-row"><strong>Skills in Resume:</strong><div class="chip-list">${renderChips(resumeSkills,'accent')}</div></div>
+          <div class="result-row"><strong>Skills in Job Description:</strong><div class="chip-list">${renderChips(jobSkills,'default')}</div></div>
+          <div class="result-row"><strong>Missing Skills:</strong><div class="chip-list">${renderChips(missingSkills,'danger')}</div></div>
+          <div class="result-row"><strong>ATS Match Percentage:</strong> <span class="chip chip--success">${result.atsPercentage.toFixed(2)}%</span></div>
+        `;
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'An unexpected error occurred. Please try again.');
+      } finally {
+        if (button) { button.disabled = false; button.textContent = 'Run Analysis'; }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { updateCharCount(); updateFileName(); });
+  </script>
+</body>
+</html>

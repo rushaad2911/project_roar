@@ -49,6 +49,10 @@ INSTALLED_APPS = [
     'reports',
     'counselling',
     'department',
+<<<<<<< HEAD
+=======
+    'resume_analyzer'
+>>>>>>> 7c09564 (Initial commit - ROAR project with Resume Analyzer)
 ]
 
 MIDDLEWARE = [

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from django.urls import path
+=======
+from django.urls import path,include
+>>>>>>> 7c09564 (Initial commit - ROAR project with Resume Analyzer)
 from . import views
 
 urlpatterns = [
@@ -7,4 +11,8 @@ urlpatterns = [
     path('create/', views.StudentCreateView.as_view(), name='student_create'),
     path('<int:pk>/update/', views.StudentUpdateView.as_view(), name='student_update'),
     path('<int:pk>/delete/', views.StudentDeleteView.as_view(), name='student_delete'),
+<<<<<<< HEAD
+=======
+    path("resume-analyzer/", include("resume_analyzer.urls", namespace="resume_analyzer")),
+>>>>>>> 7c09564 (Initial commit - ROAR project with Resume Analyzer)
 ]
