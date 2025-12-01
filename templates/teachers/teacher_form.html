@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Teacher Form – ROAR{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-header">
+    <h1>{{ object|default:'New Teacher' }}</h1>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+
+        <form method="post">
+            {% csrf_token %}
+
+            <h4>User Information</h4>
+            <div class="row">
+                {% for field in user_form %}
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    <small class="text-danger">{{ field.errors }}</small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <hr>
+
+            <h4>Teacher Profile</h4>
+            <div class="row">
+                {% for field in teacher_form %}
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    <small class="text-danger">{{ field.errors }}</small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button class="btn btn-success mt-3">
+                <i class="fas fa-save"></i> Save
+            </button>
+
+            <a href="{% url 'teacher_list' %}" class="btn btn-secondary mt-3">
+                Cancel
+            </a>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -4,10 +4,12 @@ from django.shortcuts import redirect
 from django.db import transaction
 from django.urls import reverse_lazy
 from django.db.models import Q
+from django.shortcuts import render, redirect
 
 from .models import Student
 from .forms import StudentForm, StudentUserForm
 from accounts.models import User
+from django.views import View
 
 
 class AdminRequiredMixin(UserPassesTestMixin):
@@ -112,39 +114,40 @@ class StudentDetailView(LoginRequiredMixin, AdminRequiredMixin, DetailView):
         return context
 
 
-class StudentCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class StudentCreateView(LoginRequiredMixin, AdminRequiredMixin, View):
     template_name = 'students/student_form.html'
     success_url = reverse_lazy('student_list')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.setdefault('user_form', StudentUserForm())
-        context.setdefault('student_form', StudentForm())
-        return context
+    def get(self, request, *args, **kwargs):
+        user_form = StudentUserForm()
+        student_form = StudentForm()
+        return render(request, self.template_name, {
+            "user_form": user_form,
+            "student_form": student_form,
+        })
 
     @transaction.atomic
-    def form_valid(self, form):
-        context = self.get_context_data()
-        user_form = context['user_form']
-        student_form = context['student_form']
+    def post(self, request, *args, **kwargs):
+        user_form = StudentUserForm(request.POST)
+        student_form = StudentForm(request.POST)
 
         if user_form.is_valid() and student_form.is_valid():
+
+            # Create user
             user = user_form.save(commit=False)
-            user.user_type = 'student'
+            user.user_type = "student"
             user.save()
 
+            # Create student
             student = student_form.save(commit=False)
             student.user = user
             student.save()
 
             return redirect(self.success_url)
-        return self.render_to_response(context)
 
-    def post(self, request, *args, **kwargs):
-        self.object = None
-        return self.form_valid({
-            "user_form": StudentUserForm(request.POST),
-            "student_form": StudentForm(request.POST)
+        return render(request, self.template_name, {
+            "user_form": user_form,
+            "student_form": student_form,
         })
 
 
