@@ -11,7 +11,7 @@ def index(request):
     """
     Render the analyzer UI. The front-end JS will call /analyze/ to POST data.
     """
-    return render(request, "resume_analyzer/index.html")
+    return render(request, "resume_analyzer.html")
 
 
 @login_required
